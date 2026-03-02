@@ -21,7 +21,8 @@ inference = [
   "torch>=2.4",
   "transformers>=4.45",
   "accelerate>=1.0",
-  "vllm>=0.6",
+  "vllm>=0.16,<0.17",
+  "protobuf<5",
 ]
 
 [tool.setuptools]

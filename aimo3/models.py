@@ -57,7 +57,7 @@ class GPTOSS120BModel(BaseGeneratorModel):
         model_path: str | None = None,
         backend: str | None = None,
         gpu_memory_utilization: float = 0.95,
-        max_model_len: int = 4096,
+        max_model_len: int = 2048,
     ) -> None:
         self.model_id = model_id
         self.model_path = model_path or os.getenv("AIMO3_MODEL_PATH", model_id)
@@ -68,9 +68,27 @@ class GPTOSS120BModel(BaseGeneratorModel):
         self.max_model_len = int(os.getenv("AIMO3_VLLM_MAX_MODEL_LEN", str(max_model_len)))
         self.max_num_seqs = int(os.getenv("AIMO3_VLLM_MAX_NUM_SEQS", "1"))
         self.max_num_batched_tokens = int(
-            os.getenv("AIMO3_VLLM_MAX_NUM_BATCHED_TOKENS", str(max(2048, self.max_model_len)))
+            os.getenv("AIMO3_VLLM_MAX_NUM_BATCHED_TOKENS", "1024")
         )
-        self.enforce_eager = os.getenv("AIMO3_VLLM_ENFORCE_EAGER", "1").strip().lower() in {
+        self.max_cudagraph_capture_size = int(
+            os.getenv(
+                "AIMO3_VLLM_MAX_CUDAGRAPH_CAPTURE_SIZE",
+                str(min(2048, max(1, self.max_num_batched_tokens))),
+            )
+        )
+        self.enforce_eager = os.getenv("AIMO3_VLLM_ENFORCE_EAGER", "0").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        self.async_scheduling = os.getenv("AIMO3_VLLM_ASYNC_SCHEDULING", "1").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        self.enable_prefix_caching = os.getenv("AIMO3_VLLM_ENABLE_PREFIX_CACHING", "0").strip().lower() in {
             "1",
             "true",
             "yes",
@@ -93,10 +111,10 @@ class GPTOSS120BModel(BaseGeneratorModel):
         if self._loaded:
             return
 
-        # if self.model_id != self.MODEL_ID:
-        #     raise StrictModelRequirementError(
-        #         f"Model bắt buộc là '{self.MODEL_ID}', hiện tại nhận '{self.model_id}'."
-        #     )
+        if self.model_id != self.MODEL_ID:
+            raise StrictModelRequirementError(
+                f"Model bắt buộc là '{self.MODEL_ID}', hiện tại nhận '{self.model_id}'."
+            )
 
         if self.backend == "vllm":
             try:
@@ -139,32 +157,42 @@ class GPTOSS120BModel(BaseGeneratorModel):
     def _build_vllm_engine(self, llm_cls: Any) -> Any:
         tp = int(os.getenv("AIMO3_TP", "1"))
         low_len = max(1024, self.max_model_len // 2)
+        low_batched = max(512, self.max_num_batched_tokens // 2)
         profiles = [
-            # Default constrained profile.
+            # Recipe-aligned H100 TP1 profile.
             {
                 "gpu_memory_utilization": self.gpu_memory_utilization,
                 "max_model_len": self.max_model_len,
                 "max_num_seqs": self.max_num_seqs,
                 "max_num_batched_tokens": self.max_num_batched_tokens,
                 "enforce_eager": self.enforce_eager,
+                "async_scheduling": self.async_scheduling,
+                "enable_prefix_caching": self.enable_prefix_caching,
+                "max_cudagraph_capture_size": self.max_cudagraph_capture_size,
                 "disable_log_stats": self.disable_log_stats,
             },
-            # KV-cache rescue profile (more GPU share for cache, shorter context).
+            # KV-cache rescue profile: shorter context + smaller batches.
             {
-                "gpu_memory_utilization": min(max(self.gpu_memory_utilization, 0.99), 0.999),
+                "gpu_memory_utilization": min(max(self.gpu_memory_utilization, 0.97), 0.985),
                 "max_model_len": low_len,
                 "max_num_seqs": 1,
-                "max_num_batched_tokens": low_len,
-                "enforce_eager": True,
+                "max_num_batched_tokens": low_batched,
+                "enforce_eager": self.enforce_eager,
+                "async_scheduling": True,
+                "enable_prefix_caching": False,
+                "max_cudagraph_capture_size": min(512, low_batched),
                 "disable_log_stats": self.disable_log_stats,
             },
-            # Sampler warmup OOM rescue profile (leave more headroom).
+            # Sampler warmup OOM rescue profile: reduce warmup pressure aggressively.
             {
-                "gpu_memory_utilization": max(0.90, self.gpu_memory_utilization - 0.04),
-                "max_model_len": low_len,
+                "gpu_memory_utilization": max(0.90, self.gpu_memory_utilization - 0.03),
+                "max_model_len": max(1024, low_len),
                 "max_num_seqs": 1,
-                "max_num_batched_tokens": low_len,
+                "max_num_batched_tokens": max(256, low_batched),
                 "enforce_eager": True,
+                "async_scheduling": True,
+                "enable_prefix_caching": False,
+                "max_cudagraph_capture_size": 256,
                 "disable_log_stats": self.disable_log_stats,
             },
         ]
@@ -277,10 +305,10 @@ class DeterministicJudge(BaseJudgeModel):
 
 def load_required_gpt_oss_120b() -> GPTOSS120BModel:
     model_id = os.getenv("AIMO3_MODEL_ID", GPTOSS120BModel.MODEL_ID)
-    # if model_id != GPTOSS120BModel.MODEL_ID:
-    #     raise StrictModelRequirementError(
-    #         f"Cấu hình sai: AIMO3_MODEL_ID phải là '{GPTOSS120BModel.MODEL_ID}'."
-    #     )
+    if model_id != GPTOSS120BModel.MODEL_ID:
+        raise StrictModelRequirementError(
+            f"Cấu hình sai: AIMO3_MODEL_ID phải là '{GPTOSS120BModel.MODEL_ID}'."
+        )
     model_path = os.getenv("AIMO3_MODEL_PATH", model_id)
     backend = os.getenv("AIMO3_LLM_BACKEND", "vllm")
     return GPTOSS120BModel(model_id=model_id, model_path=model_path, backend=backend)

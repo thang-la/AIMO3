@@ -19,8 +19,11 @@ export AIMO3_TP="1"
 export AIMO3_VLLM_GPU_MEMORY_UTILIZATION="0.95"
 export AIMO3_VLLM_MAX_MODEL_LEN="2048"     # increase only if VRAM still has room
 export AIMO3_VLLM_MAX_NUM_SEQS="1"
-export AIMO3_VLLM_MAX_NUM_BATCHED_TOKENS="2048"
-export AIMO3_VLLM_ENFORCE_EAGER="1"
+export AIMO3_VLLM_MAX_NUM_BATCHED_TOKENS="1024"
+export AIMO3_VLLM_MAX_CUDAGRAPH_CAPTURE_SIZE="1024"
+export AIMO3_VLLM_ASYNC_SCHEDULING="1"
+export AIMO3_VLLM_ENABLE_PREFIX_CACHING="0"
+export AIMO3_VLLM_ENFORCE_EAGER="0"
 ```
 
 If config is invalid or backend missing, solver fails fast with `StrictModelRequirementError`.

@@ -13,13 +13,19 @@
 - `AIMO3_VLLM_GPU_MEMORY_UTILIZATION`
   - default `0.95`; tune in range `0.91-0.97` when sampler/KV OOM happens
 - `AIMO3_VLLM_MAX_MODEL_LEN`
-  - default `4096`, reduce to `2048` if KV cache OOM
+  - default `2048` for 1x H100 stability profile
 - `AIMO3_VLLM_MAX_NUM_SEQS`
   - default `1` for conservative memory profile
 - `AIMO3_VLLM_MAX_NUM_BATCHED_TOKENS`
-  - default `max(2048, max_model_len)`
+  - default `1024` (recipe-aligned for GPT-OSS on 1x H100 TP1)
+- `AIMO3_VLLM_MAX_CUDAGRAPH_CAPTURE_SIZE`
+  - default `min(2048, max_num_batched_tokens)`
+- `AIMO3_VLLM_ASYNC_SCHEDULING`
+  - default `1`
+- `AIMO3_VLLM_ENABLE_PREFIX_CACHING`
+  - default `0` (disabled for memory headroom and stable profiling)
 - `AIMO3_VLLM_ENFORCE_EAGER`
-  - default `1` to reduce torch.compile memory pressure
+  - default `0`; set `1` only as OOM fallback
 
 ## Runtime notes
 
