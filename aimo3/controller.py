@@ -8,12 +8,33 @@ from aimo3.budget import allocate_budget
 from aimo3.config import SolverConfig
 from aimo3.generator import CandidateGenerator
 from aimo3.hard_mode import HardModeEngine
-from aimo3.llm import BaseLLMBackend, HeuristicLLMBackend, NeuralJudge
+from aimo3.llm import (
+    BaseLLMBackend,
+    CompetitionLLMBackend,
+    HeuristicLLMBackend,
+    InferenceUnavailableError,
+    NeuralJudge,
+)
 from aimo3.models import PromptProgram, SolveResult, VerificationResult
 from aimo3.parsing import parse_problem
 from aimo3.router import route_problem
 from aimo3.symbolic import symbolic_first_pass
 from aimo3.verifier import Verifier
+
+
+def _default_backend(config: SolverConfig) -> BaseLLMBackend:
+    mode = config.llm.backend.lower()
+    if mode == "heuristic":
+        if config.enforce_real_backend and not config.allow_demo_fallback:
+            raise InferenceUnavailableError(
+                "Heuristic backend is disabled. Set allow_demo_fallback=True to use it explicitly."
+            )
+        return HeuristicLLMBackend()
+
+    backend = CompetitionLLMBackend(config.llm)
+    if config.enforce_real_backend:
+        backend.validate_runtime()
+    return backend
 
 
 class AIMO3Solver:
@@ -25,7 +46,7 @@ class AIMO3Solver:
         judge: NeuralJudge | None = None,
     ):
         self.config = config or SolverConfig()
-        self.llm_main = llm_main or HeuristicLLMBackend()
+        self.llm_main = llm_main or _default_backend(self.config)
         self.llm_fast = llm_fast or self.llm_main
         self.judge = judge or NeuralJudge()
         self.generator = CandidateGenerator(self.llm_main)
@@ -102,6 +123,8 @@ class AIMO3Solver:
         if selected is not None and selected.normalized_answer is not None:
             answer = selected.normalized_answer
         else:
+            if self.config.enforce_real_backend and not self.config.allow_demo_fallback:
+                raise RuntimeError("No valid answer candidate produced under strict competition mode.")
             answer = self._fallback_answer(meta.statement_hash)
             reason = f"{reason}|fallback_hash"
 

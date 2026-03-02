@@ -1,7 +1,7 @@
 {
   "pid": "92ba6a",
-  "answer": 38088,
-  "selected_answer": 38088,
+  "answer": 60624,
+  "selected_answer": 60624,
   "route": {
     "domain": "combinatorics",
     "difficulty": "easy",
@@ -17,27 +17,24 @@
   "candidates": [
     {
       "path": "P1_tool",
-      "answer": null,
-      "score": -3.0,
-      "hard_ok": false,
-      "symbolic_ok": false,
-      "random_ok": false,
-      "judge_prob": 0.0,
-      "vote_share": 0.0,
-      "notes": [
-        "sandbox execution failed",
-        "hard constraints failed (range/format)"
-      ]
+      "answer": 60624,
+      "score": 5.5,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": true,
+      "judge_prob": 0.75,
+      "vote_share": 0.5,
+      "notes": []
     },
     {
       "path": "P2_reasoning",
-      "answer": 38088,
-      "score": 4.55,
+      "answer": 93546,
+      "score": 4.25,
       "hard_ok": true,
       "symbolic_ok": true,
       "random_ok": false,
-      "judge_prob": 0.55,
-      "vote_share": 1.0,
+      "judge_prob": 0.5,
+      "vote_share": 0.5,
       "notes": []
     }
   ]

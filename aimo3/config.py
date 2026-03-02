@@ -24,6 +24,24 @@ class VerificationWeights:
 
 
 @dataclass(frozen=True)
+class LLMRuntimeConfig:
+    backend: str = "auto"  # auto|vllm|transformers|heuristic
+    model_main: str = "openai/gpt-oss-120b"
+    model_fast: str = "openai/gpt-oss-20b"
+    max_new_tokens_easy: int = 900
+    max_new_tokens_medium: int = 1300
+    max_new_tokens_hard: int = 1800
+    top_p: float = 0.95
+    temperature_easy: float = 0.0
+    temperature_medium: float = 0.2
+    temperature_hard: float = 0.4
+    tensor_parallel_size: int = 1
+    gpu_memory_utilization: float = 0.90
+    max_model_len: int = 8192
+    trust_remote_code: bool = True
+
+
+@dataclass(frozen=True)
 class SolverConfig:
     easy: DifficultyBudgetConfig = field(
         default_factory=lambda: DifficultyBudgetConfig(
@@ -58,5 +76,8 @@ class SolverConfig:
     global_modulus_fallback: int = 100000
     run_log_dir: Path = field(default_factory=lambda: Path("runs"))
     enable_hard_mode: bool = True
+    enforce_real_backend: bool = True
+    allow_demo_fallback: bool = False
     allow_reference_lookup: bool = False
     reference_path: Path = field(default_factory=lambda: Path("reference.csv"))
+    llm: LLMRuntimeConfig = field(default_factory=LLMRuntimeConfig)

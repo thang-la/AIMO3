@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import os
 
+from aimo3.config import SolverConfig
 from aimo3.controller import AIMO3Solver
+from aimo3.runtime import solver_config_from_env
 
 _SOLVER: AIMO3Solver | None = None
 _RUN_SEED = int.from_bytes(os.urandom(4), "big")
@@ -11,7 +13,8 @@ _RUN_SEED = int.from_bytes(os.urandom(4), "big")
 def get_solver() -> AIMO3Solver:
     global _SOLVER
     if _SOLVER is None:
-        _SOLVER = AIMO3Solver()
+        config: SolverConfig = solver_config_from_env()
+        _SOLVER = AIMO3Solver(config=config)
     return _SOLVER
 
 

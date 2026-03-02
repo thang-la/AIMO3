@@ -3,9 +3,12 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+from dataclasses import replace
 from pathlib import Path
 
+from aimo3.config import SolverConfig
 from aimo3.controller import AIMO3Solver
+from aimo3.runtime import solver_config_from_env
 
 
 def _read_csv(path: Path) -> list[dict[str, str]]:
@@ -22,8 +25,25 @@ def _write_csv(path: Path, rows: list[dict[str, object]], fieldnames: list[str])
             writer.writerow(row)
 
 
+def _build_solver(args: argparse.Namespace) -> AIMO3Solver:
+    config: SolverConfig = solver_config_from_env()
+    llm = config.llm
+    if getattr(args, "backend", None):
+        llm = replace(llm, backend=args.backend)
+    if getattr(args, "model_main", None):
+        llm = replace(llm, model_main=args.model_main)
+    if getattr(args, "model_fast", None):
+        llm = replace(llm, model_fast=args.model_fast)
+    config = replace(config, llm=llm)
+    if getattr(args, "allow_demo_fallback", False):
+        config = replace(config, allow_demo_fallback=True)
+    if getattr(args, "no_enforce_real_backend", False):
+        config = replace(config, enforce_real_backend=False)
+    return AIMO3Solver(config=config)
+
+
 def cmd_solve_one(args: argparse.Namespace) -> int:
-    solver = AIMO3Solver()
+    solver = _build_solver(args)
     problem = args.problem
     if args.problem_file:
         problem = Path(args.problem_file).read_text(encoding="utf-8")
@@ -39,7 +59,7 @@ def cmd_solve_one(args: argparse.Namespace) -> int:
 
 
 def cmd_solve_csv(args: argparse.Namespace) -> int:
-    solver = AIMO3Solver()
+    solver = _build_solver(args)
     rows = _read_csv(Path(args.input))
     output_rows: list[dict[str, object]] = []
     score_correct = 0
@@ -72,6 +92,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_one.add_argument("--problem", default="")
     p_one.add_argument("--problem-file")
     p_one.add_argument("--json", action="store_true")
+    p_one.add_argument("--backend", choices=["auto", "vllm", "transformers", "heuristic"])
+    p_one.add_argument("--model-main")
+    p_one.add_argument("--model-fast")
+    p_one.add_argument("--allow-demo-fallback", action="store_true")
+    p_one.add_argument("--no-enforce-real-backend", action="store_true")
     p_one.set_defaults(func=cmd_solve_one)
 
     p_csv = sub.add_parser("solve-csv", help="solve CSV input -> submission")
@@ -80,6 +105,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_csv.add_argument("--id-col", default="id")
     p_csv.add_argument("--problem-col", default="problem")
     p_csv.add_argument("--evaluate", action="store_true")
+    p_csv.add_argument("--backend", choices=["auto", "vllm", "transformers", "heuristic"])
+    p_csv.add_argument("--model-main")
+    p_csv.add_argument("--model-fast")
+    p_csv.add_argument("--allow-demo-fallback", action="store_true")
+    p_csv.add_argument("--no-enforce-real-backend", action="store_true")
     p_csv.set_defaults(func=cmd_solve_csv)
     return parser
 

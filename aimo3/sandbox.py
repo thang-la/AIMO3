@@ -4,6 +4,7 @@ import ast
 import io
 import multiprocessing as mp
 import re
+import signal
 import traceback
 from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
@@ -132,6 +133,10 @@ def _extract_int_from_stdout(stdout: str) -> int | None:
 
 
 def _worker(code: str, queue: mp.Queue, memory_mb: int) -> None:
+    queue.put(_execute_code_capture(code, memory_mb))
+
+
+def _execute_code_capture(code: str, memory_mb: int) -> dict[str, object]:
     try:
         try:
             import resource
@@ -156,24 +161,57 @@ def _worker(code: str, queue: mp.Queue, memory_mb: int) -> None:
         else:
             answer = _extract_int_from_stdout(stdout_buffer.getvalue())
 
-        queue.put(
-            {
-                "success": answer is not None,
-                "answer": answer,
-                "stdout": stdout_buffer.getvalue(),
-                "stderr": stderr_buffer.getvalue(),
-            }
-        )
+        return {
+            "success": answer is not None,
+            "answer": answer,
+            "stdout": stdout_buffer.getvalue(),
+            "stderr": stderr_buffer.getvalue(),
+        }
     except Exception as exc:
-        queue.put(
-            {
-                "success": False,
-                "answer": None,
-                "stdout": "",
-                "stderr": traceback.format_exc(),
-                "error": str(exc),
-            }
-        )
+        return {
+            "success": False,
+            "answer": None,
+            "stdout": "",
+            "stderr": traceback.format_exc(),
+            "error": str(exc),
+        }
+
+
+def _run_inline_with_timeout(code: str, timeout_s: float, memory_mb: int) -> SandboxResult:
+    timed_out = False
+
+    def _handle_timeout(_signum, _frame):  # pragma: no cover - signal dependent
+        raise TimeoutError("timeout")
+
+    old_handler = None
+    try:
+        if timeout_s > 0:
+            old_handler = signal.getsignal(signal.SIGALRM)
+            signal.signal(signal.SIGALRM, _handle_timeout)
+            signal.setitimer(signal.ITIMER_REAL, timeout_s)
+        payload = _execute_code_capture(code, memory_mb)
+    except TimeoutError:
+        timed_out = True
+        payload = {"success": False, "answer": None, "stdout": "", "stderr": "", "error": "timeout"}
+    finally:
+        try:
+            signal.setitimer(signal.ITIMER_REAL, 0)
+        except Exception:
+            pass
+        if old_handler is not None:
+            try:
+                signal.signal(signal.SIGALRM, old_handler)
+            except Exception:
+                pass
+
+    return SandboxResult(
+        success=bool(payload.get("success")),
+        answer=payload.get("answer"),  # type: ignore[arg-type]
+        stdout=str(payload.get("stdout", "")),
+        stderr=str(payload.get("stderr", "")),
+        timeout=timed_out,
+        error=payload.get("error"),  # type: ignore[arg-type]
+    )
 
 
 def run_python_sandbox(code: str, timeout_s: float, memory_mb: int) -> SandboxResult:
@@ -182,25 +220,29 @@ def run_python_sandbox(code: str, timeout_s: float, memory_mb: int) -> SandboxRe
     except Exception as exc:
         return SandboxResult(success=False, answer=None, error=str(exc))
 
-    queue: mp.Queue = mp.Queue()
-    process = mp.Process(target=_worker, args=(code, queue, memory_mb))
-    process.start()
-    process.join(timeout=timeout_s)
+    try:
+        queue: mp.Queue = mp.Queue()
+        process = mp.Process(target=_worker, args=(code, queue, memory_mb))
+        process.start()
+        process.join(timeout=timeout_s)
 
-    if process.is_alive():
-        process.terminate()
-        process.join()
-        return SandboxResult(success=False, answer=None, timeout=True, error="timeout")
+        if process.is_alive():
+            process.terminate()
+            process.join()
+            return SandboxResult(success=False, answer=None, timeout=True, error="timeout")
 
-    if queue.empty():
-        return SandboxResult(success=False, answer=None, error="sandbox returned no result")
+        if queue.empty():
+            return SandboxResult(success=False, answer=None, error="sandbox returned no result")
 
-    payload = queue.get()
-    return SandboxResult(
-        success=bool(payload.get("success")),
-        answer=payload.get("answer"),
-        stdout=payload.get("stdout", ""),
-        stderr=payload.get("stderr", ""),
-        timeout=False,
-        error=payload.get("error"),
-    )
+        payload = queue.get()
+        return SandboxResult(
+            success=bool(payload.get("success")),
+            answer=payload.get("answer"),
+            stdout=payload.get("stdout", ""),
+            stderr=payload.get("stderr", ""),
+            timeout=False,
+            error=payload.get("error"),
+        )
+    except (PermissionError, OSError):
+        # Some restricted runtimes disallow multiprocessing semaphores.
+        return _run_inline_with_timeout(code, timeout_s=timeout_s, memory_mb=memory_mb)

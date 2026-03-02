@@ -1,7 +1,7 @@
 {
   "pid": "641659",
-  "answer": 37526,
-  "selected_answer": 37526,
+  "answer": 77980,
+  "selected_answer": 77980,
   "route": {
     "domain": "geometry",
     "difficulty": "hard",
@@ -26,224 +26,200 @@
   "candidates": [
     {
       "path": "P1_tool",
-      "answer": null,
-      "score": -3.0,
-      "hard_ok": false,
-      "symbolic_ok": false,
-      "random_ok": false,
-      "judge_prob": 0.0,
-      "vote_share": 0.0,
-      "notes": [
-        "sandbox execution failed",
-        "hard constraints failed (range/format)"
-      ]
-    },
-    {
-      "path": "P1_tool",
-      "answer": null,
-      "score": -3.0,
-      "hard_ok": false,
-      "symbolic_ok": false,
-      "random_ok": false,
-      "judge_prob": 0.0,
-      "vote_share": 0.0,
-      "notes": [
-        "sandbox execution failed",
-        "hard constraints failed (range/format)"
-      ]
-    },
-    {
-      "path": "P1_tool",
-      "answer": null,
-      "score": -3.0,
-      "hard_ok": false,
-      "symbolic_ok": false,
-      "random_ok": false,
-      "judge_prob": 0.0,
-      "vote_share": 0.0,
-      "notes": [
-        "sandbox execution failed",
-        "hard constraints failed (range/format)"
-      ]
-    },
-    {
-      "path": "P1_tool",
-      "answer": null,
-      "score": -3.0,
-      "hard_ok": false,
-      "symbolic_ok": false,
-      "random_ok": false,
-      "judge_prob": 0.0,
-      "vote_share": 0.0,
-      "notes": [
-        "sandbox execution failed",
-        "hard constraints failed (range/format)"
-      ]
-    },
-    {
-      "path": "P2_reasoning",
-      "answer": 37526,
-      "score": 4.199999999999999,
+      "answer": 77980,
+      "score": 5.333333333333333,
       "hard_ok": true,
       "symbolic_ok": true,
-      "random_ok": false,
-      "judge_prob": 0.55,
-      "vote_share": 0.1,
+      "random_ok": true,
+      "judge_prob": 0.75,
+      "vote_share": 0.05555555555555555,
+      "notes": []
+    },
+    {
+      "path": "P1_tool",
+      "answer": 47548,
+      "score": 5.333333333333333,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": true,
+      "judge_prob": 0.75,
+      "vote_share": 0.05555555555555555,
+      "notes": []
+    },
+    {
+      "path": "P1_tool",
+      "answer": 21418,
+      "score": 5.333333333333333,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": true,
+      "judge_prob": 0.75,
+      "vote_share": 0.05555555555555555,
+      "notes": []
+    },
+    {
+      "path": "P1_tool",
+      "answer": 98689,
+      "score": 5.333333333333333,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": true,
+      "judge_prob": 0.75,
+      "vote_share": 0.05555555555555555,
       "notes": []
     },
     {
       "path": "P2_reasoning",
-      "answer": 3577,
-      "score": 4.199999999999999,
+      "answer": 25547,
+      "score": 4.083333333333333,
       "hard_ok": true,
       "symbolic_ok": true,
       "random_ok": false,
-      "judge_prob": 0.55,
-      "vote_share": 0.1,
+      "judge_prob": 0.5,
+      "vote_share": 0.05555555555555555,
       "notes": []
     },
     {
       "path": "P2_reasoning",
-      "answer": 14722,
-      "score": 4.199999999999999,
+      "answer": 15302,
+      "score": 4.083333333333333,
       "hard_ok": true,
       "symbolic_ok": true,
       "random_ok": false,
-      "judge_prob": 0.55,
-      "vote_share": 0.1,
+      "judge_prob": 0.5,
+      "vote_share": 0.05555555555555555,
+      "notes": []
+    },
+    {
+      "path": "P2_reasoning",
+      "answer": 19296,
+      "score": 4.083333333333333,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.5,
+      "vote_share": 0.05555555555555555,
       "notes": []
     },
     {
       "path": "P3_backsolve",
-      "answer": 57212,
-      "score": 4.199999999999999,
+      "answer": 72345,
+      "score": 4.083333333333333,
       "hard_ok": true,
       "symbolic_ok": true,
       "random_ok": false,
-      "judge_prob": 0.55,
-      "vote_share": 0.1,
+      "judge_prob": 0.5,
+      "vote_share": 0.05555555555555555,
       "notes": []
     },
     {
       "path": "P3_backsolve",
-      "answer": 24194,
-      "score": 4.199999999999999,
+      "answer": 29709,
+      "score": 4.083333333333333,
       "hard_ok": true,
       "symbolic_ok": true,
       "random_ok": false,
-      "judge_prob": 0.55,
-      "vote_share": 0.1,
+      "judge_prob": 0.5,
+      "vote_share": 0.05555555555555555,
       "notes": []
     },
     {
       "path": "P1_tool",
-      "answer": null,
-      "score": -3.0,
-      "hard_ok": false,
-      "symbolic_ok": false,
-      "random_ok": false,
-      "judge_prob": 0.0,
-      "vote_share": 0.0,
-      "notes": [
-        "sandbox execution failed",
-        "hard constraints failed (range/format)"
-      ]
-    },
-    {
-      "path": "P1_tool",
-      "answer": null,
-      "score": -3.0,
-      "hard_ok": false,
-      "symbolic_ok": false,
-      "random_ok": false,
-      "judge_prob": 0.0,
-      "vote_share": 0.0,
-      "notes": [
-        "sandbox execution failed",
-        "hard constraints failed (range/format)"
-      ]
-    },
-    {
-      "path": "P1_tool",
-      "answer": null,
-      "score": -3.0,
-      "hard_ok": false,
-      "symbolic_ok": false,
-      "random_ok": false,
-      "judge_prob": 0.0,
-      "vote_share": 0.0,
-      "notes": [
-        "sandbox execution failed",
-        "hard constraints failed (range/format)"
-      ]
-    },
-    {
-      "path": "P1_tool",
-      "answer": null,
-      "score": -3.0,
-      "hard_ok": false,
-      "symbolic_ok": false,
-      "random_ok": false,
-      "judge_prob": 0.0,
-      "vote_share": 0.0,
-      "notes": [
-        "sandbox execution failed",
-        "hard constraints failed (range/format)"
-      ]
-    },
-    {
-      "path": "P2_reasoning",
-      "answer": 54123,
-      "score": 4.1,
+      "answer": 36813,
+      "score": 5.277777777777778,
       "hard_ok": true,
       "symbolic_ok": true,
-      "random_ok": false,
-      "judge_prob": 0.55,
-      "vote_share": 0.1,
+      "random_ok": true,
+      "judge_prob": 0.75,
+      "vote_share": 0.05555555555555555,
+      "notes": []
+    },
+    {
+      "path": "P1_tool",
+      "answer": 84266,
+      "score": 5.277777777777778,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": true,
+      "judge_prob": 0.75,
+      "vote_share": 0.05555555555555555,
+      "notes": []
+    },
+    {
+      "path": "P1_tool",
+      "answer": 27804,
+      "score": 5.277777777777778,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": true,
+      "judge_prob": 0.75,
+      "vote_share": 0.05555555555555555,
+      "notes": []
+    },
+    {
+      "path": "P1_tool",
+      "answer": 3511,
+      "score": 5.277777777777778,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": true,
+      "judge_prob": 0.75,
+      "vote_share": 0.05555555555555555,
       "notes": []
     },
     {
       "path": "P2_reasoning",
-      "answer": 96576,
-      "score": 4.1,
+      "answer": 63574,
+      "score": 4.027777777777778,
       "hard_ok": true,
       "symbolic_ok": true,
       "random_ok": false,
-      "judge_prob": 0.55,
-      "vote_share": 0.1,
+      "judge_prob": 0.5,
+      "vote_share": 0.05555555555555555,
       "notes": []
     },
     {
       "path": "P2_reasoning",
-      "answer": 8401,
-      "score": 4.1,
+      "answer": 61979,
+      "score": 4.027777777777778,
       "hard_ok": true,
       "symbolic_ok": true,
       "random_ok": false,
-      "judge_prob": 0.55,
-      "vote_share": 0.1,
+      "judge_prob": 0.5,
+      "vote_share": 0.05555555555555555,
+      "notes": []
+    },
+    {
+      "path": "P2_reasoning",
+      "answer": 1838,
+      "score": 4.027777777777778,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.5,
+      "vote_share": 0.05555555555555555,
       "notes": []
     },
     {
       "path": "P3_backsolve",
-      "answer": 64285,
-      "score": 4.1,
+      "answer": 89623,
+      "score": 4.027777777777778,
       "hard_ok": true,
       "symbolic_ok": true,
       "random_ok": false,
-      "judge_prob": 0.55,
-      "vote_share": 0.1,
+      "judge_prob": 0.5,
+      "vote_share": 0.05555555555555555,
       "notes": []
     },
     {
       "path": "P3_backsolve",
-      "answer": 83759,
-      "score": 4.1,
+      "answer": 37375,
+      "score": 4.027777777777778,
       "hard_ok": true,
       "symbolic_ok": true,
       "random_ok": false,
-      "judge_prob": 0.55,
-      "vote_share": 0.1,
+      "judge_prob": 0.5,
+      "vote_share": 0.05555555555555555,
       "notes": []
     }
   ]

@@ -16,6 +16,10 @@ solver = [
   "pandas>=2.2.0",
   "polars>=1.0.0",
 ]
+runtime = [
+  "transformers>=4.45.0",
+  "accelerate>=0.34.0",
+]
 dev = [
   "pytest>=8.0.0",
 ]

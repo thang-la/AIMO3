@@ -9,7 +9,7 @@ This repository implements the full inference + training-data workflow defined i
 - offline data pipeline for synthetic SFT data, self-play rollouts, and verifier pair generation
 - contamination guard and near-duplicate filtering
 
-The default runtime backend is deterministic and local (`HeuristicLLMBackend`) so the system runs immediately without downloading model weights. Real model backends can be plugged in behind the same interface.
+The default runtime backend is **strict real-model mode** (`CompetitionLLMBackend`), with lazy runtime loading for `vLLM`/`Transformers`. Heuristic mode exists only as explicit fallback for local smoke tests.
 
 ## 2. Repository Layout
 
@@ -18,7 +18,7 @@ The default runtime backend is deterministic and local (`HeuristicLLMBackend`) s
 - `aimo3/parsing.py`: normalization and extraction (modulus, equations, variables, number tokens, domain hints).
 - `aimo3/router.py`: domain/difficulty routing and strategy flags.
 - `aimo3/budget.py`: progressive-deepening budget manager.
-- `aimo3/llm.py`: generation backend interface, heuristic backend, and judge placeholder.
+- `aimo3/llm.py`: generation backend interface, competition LLM backend (vLLM/Transformers), strict runtime checks, heuristic fallback, and judge placeholder.
 - `aimo3/sandbox.py`: safe Python executor (AST allowlist + timeout + memory cap).
 - `aimo3/symbolic.py`: P0 symbolic-first solver rules (safe arithmetic + optional SymPy linear case).
 - `aimo3/generator.py`: multi-path candidate generation (P1/P2/P3).
@@ -60,7 +60,8 @@ The default runtime backend is deterministic and local (`HeuristicLLMBackend`) s
    - compute weighted score
    - pick top candidate
 7. Fallback:
-   - if no valid candidate survives, return deterministic hash-based answer.
+   - strict mode (`enforce_real_backend=True`) throws if no valid candidate survives.
+   - demo mode can optionally use deterministic fallback.
 
 ### 3.2 Confidence and progressive deepening
 
@@ -108,10 +109,31 @@ This gives a practical safe-by-default execution path for tool-generated code.
 
 - keeps a global lazy singleton solver (`_SOLVER`) to satisfy startup constraints
 - keeps one run seed (`_RUN_SEED`) for stable rerun behavior
+- reads backend/model settings from environment variables (`AIMO3_BACKEND`, `AIMO3_MODEL_MAIN`, `AIMO3_MODEL_FAST`, etc.)
 - exposes `predict(id_series, problem_series)` and returns:
   - `polars.DataFrame` if available
   - else `pandas.DataFrame`
   - else plain dict
+
+## 6.1 Runtime Backends
+
+`CompetitionLLMBackend` supports:
+
+- `vllm` runtime (`vllm.LLM`) with tensor-parallel and memory utilization controls
+- `transformers` runtime (`AutoModelForCausalLM` + generation pipeline)
+- `auto` mode: tries `vllm` then `transformers`
+
+Path prompting strategy:
+
+- `P1` tool path returns JSON containing `python_code` + `final_answer`
+- `P2` reasoning path returns JSON `final_answer` plus `FINAL: <int>`
+- `P3` backsolve path returns JSON with constraints-based derivation
+
+Output parser extracts:
+
+- JSON payload (`final_answer`, `answer`, nested `final.answer`)
+- `\boxed{...}` form
+- `FINAL: ...` form
 
 ## 7. Training Data Pipeline
 
@@ -190,13 +212,24 @@ No controller logic changes are required.
 Install:
 
 ```bash
-pip install -e ".[solver,dev]"
+pip install -e ".[solver,runtime,dev]"
 ```
 
 Solve CSV:
 
 ```bash
 aimo3 solve-csv --input reference.csv --output submission.csv --evaluate
+```
+
+Competition run (example):
+
+```bash
+export AIMO3_BACKEND=vllm
+export AIMO3_MODEL_MAIN=/kaggle/input/models/openai/gpt-oss-120b
+export AIMO3_MODEL_FAST=/kaggle/input/models/openai/gpt-oss-20b
+export AIMO3_TENSOR_PARALLEL_SIZE=1
+export AIMO3_ENFORCE_REAL_BACKEND=1
+aimo3 solve-csv --input test.csv --output submission.csv
 ```
 
 Run training data pipeline:
@@ -213,6 +246,6 @@ pytest -q
 
 ## 11. Current Limits
 
-- Default backend is heuristic, not a true frontier LLM; it is infrastructure-complete but not benchmark-optimized.
-- Symbolic parser intentionally conservative to keep failure-safe behavior.
+- Guaranteed leaderboard threshold (e.g., `>47/50`) cannot be promised without full weight selection, prompt calibration, and validation against held-out distributions.
+- Symbolic parser is intentionally conservative to avoid unsafe over-parsing.
 - Verifier is extensible; advanced formal checks (deep geometry formalization, Z3 integrations) are stub-ready and can be added without changing interfaces.

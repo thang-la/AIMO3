@@ -1,10 +1,18 @@
 from __future__ import annotations
 
+from dataclasses import replace
+
+from aimo3.config import SolverConfig
 from aimo3.controller import AIMO3Solver
+from aimo3.runtime import solver_config_from_env
 
 
 def run_self_play(records: list[dict], solver: AIMO3Solver | None = None) -> list[dict]:
-    solver = solver or AIMO3Solver()
+    if solver is None:
+        config: SolverConfig = solver_config_from_env()
+        if config.llm.backend == "heuristic":
+            config = replace(config, allow_demo_fallback=True, enforce_real_backend=False)
+        solver = AIMO3Solver(config=config)
     out: list[dict] = []
     for idx, row in enumerate(records):
         prompt = str(row.get("prompt", ""))
