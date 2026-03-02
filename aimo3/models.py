@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import json
 import os
 import re
@@ -55,14 +56,32 @@ class GPTOSS120BModel(BaseGeneratorModel):
         model_id: str = MODEL_ID,
         model_path: str | None = None,
         backend: str | None = None,
-        gpu_memory_utilization: float = 0.90,
-        max_model_len: int = 8192,
+        gpu_memory_utilization: float = 0.98,
+        max_model_len: int = 4096,
     ) -> None:
         self.model_id = model_id
         self.model_path = model_path or os.getenv("AIMO3_MODEL_PATH", model_id)
         self.backend = (backend or os.getenv("AIMO3_LLM_BACKEND", "vllm")).strip().lower()
-        self.gpu_memory_utilization = gpu_memory_utilization
-        self.max_model_len = max_model_len
+        self.gpu_memory_utilization = float(
+            os.getenv("AIMO3_VLLM_GPU_MEMORY_UTILIZATION", str(gpu_memory_utilization))
+        )
+        self.max_model_len = int(os.getenv("AIMO3_VLLM_MAX_MODEL_LEN", str(max_model_len)))
+        self.max_num_seqs = int(os.getenv("AIMO3_VLLM_MAX_NUM_SEQS", "1"))
+        self.max_num_batched_tokens = int(
+            os.getenv("AIMO3_VLLM_MAX_NUM_BATCHED_TOKENS", str(max(2048, self.max_model_len)))
+        )
+        self.enforce_eager = os.getenv("AIMO3_VLLM_ENFORCE_EAGER", "1").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        self.disable_log_stats = os.getenv("AIMO3_VLLM_DISABLE_LOG_STATS", "1").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
 
         self._loaded = False
         self._llm: Any = None
@@ -81,20 +100,15 @@ class GPTOSS120BModel(BaseGeneratorModel):
 
         if self.backend == "vllm":
             try:
+                os.environ.setdefault("VLLM_WORKER_MULTIPROC_METHOD", "spawn")
+                os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
                 from vllm import LLM, SamplingParams  # type: ignore
             except Exception as exc:  # pragma: no cover
                 raise StrictModelRequirementError(
                     "Không import được vLLM. Cài vllm hoặc đổi AIMO3_LLM_BACKEND=transformers."
                 ) from exc
 
-            self._llm = LLM(
-                model=self.model_path,
-                trust_remote_code=True,
-                gpu_memory_utilization=self.gpu_memory_utilization,
-                max_model_len=self.max_model_len,
-                tensor_parallel_size=int(os.getenv("AIMO3_TP", "1")),
-                seed=0,
-            )
+            self._llm = self._build_vllm_engine(LLM)
             self._sampling_params_cls = SamplingParams
             self._loaded = True
             return
@@ -120,6 +134,49 @@ class GPTOSS120BModel(BaseGeneratorModel):
 
         raise StrictModelRequirementError(
             "AIMO3_LLM_BACKEND phải là 'vllm' hoặc 'transformers'."
+        )
+
+    def _build_vllm_engine(self, llm_cls: Any) -> Any:
+        tp = int(os.getenv("AIMO3_TP", "1"))
+        profiles = [
+            {
+                "gpu_memory_utilization": self.gpu_memory_utilization,
+                "max_model_len": self.max_model_len,
+                "max_num_seqs": self.max_num_seqs,
+                "max_num_batched_tokens": self.max_num_batched_tokens,
+                "enforce_eager": self.enforce_eager,
+                "disable_log_stats": self.disable_log_stats,
+            },
+            {
+                "gpu_memory_utilization": min(max(self.gpu_memory_utilization, 0.99), 0.999),
+                "max_model_len": max(2048, self.max_model_len // 2),
+                "max_num_seqs": 1,
+                "max_num_batched_tokens": max(2048, self.max_model_len // 2),
+                "enforce_eager": True,
+                "disable_log_stats": self.disable_log_stats,
+            },
+        ]
+        errors: list[str] = []
+        for prof in profiles:
+            kwargs = {
+                "model": self.model_path,
+                "tensor_parallel_size": tp,
+                "seed": 0,
+                **prof,
+            }
+            filtered = _filter_kwargs_for_callable(llm_cls.__init__, kwargs)
+            try:
+                return llm_cls(**filtered)
+            except Exception as exc:  # pragma: no cover
+                msg = str(exc)
+                errors.append(msg)
+                if "No available memory for the cache blocks" not in msg:
+                    raise
+        raise StrictModelRequirementError(
+            "Không đủ VRAM để khởi tạo GPT-OSS-120B với vLLM. "
+            "Hãy giảm AIMO3_VLLM_MAX_MODEL_LEN (ví dụ 2048), giữ AIMO3_VLLM_MAX_NUM_SEQS=1, "
+            "và tăng AIMO3_VLLM_GPU_MEMORY_UTILIZATION (0.99). "
+            f"Chi tiết: {errors[-1] if errors else 'unknown error'}"
         )
 
     def generate(self, prompt: str, *, seed: int, max_tokens: int, temperature: float) -> Generation:
@@ -211,6 +268,15 @@ def load_required_gpt_oss_120b() -> GPTOSS120BModel:
     return GPTOSS120BModel(model_id=model_id, model_path=model_path, backend=backend)
 
 
+def _filter_kwargs_for_callable(fn: Any, kwargs: dict[str, Any]) -> dict[str, Any]:
+    try:
+        sig = inspect.signature(fn)
+    except Exception:
+        return kwargs
+    allowed = set(sig.parameters.keys())
+    return {k: v for k, v in kwargs.items() if k in allowed}
+
+
 def _extract_best_json(text: str) -> dict[str, Any] | None:
     decoder = json.JSONDecoder()
     best: dict[str, Any] | None = None
@@ -258,4 +324,3 @@ def _coerce_int(v: Any) -> int:
         if m:
             return int(m.group(0))
     return 0
-

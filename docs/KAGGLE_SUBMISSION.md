@@ -31,6 +31,11 @@ os.environ["AIMO3_MODEL_ID"] = "openai/gpt-oss-120b"
 os.environ["AIMO3_MODEL_PATH"] = "/kaggle/input/<model-dataset>/gpt-oss-120b"
 os.environ["AIMO3_LLM_BACKEND"] = "vllm"
 os.environ["AIMO3_TP"] = "1"
+os.environ["AIMO3_VLLM_GPU_MEMORY_UTILIZATION"] = "0.99"
+os.environ["AIMO3_VLLM_MAX_MODEL_LEN"] = "2048"
+os.environ["AIMO3_VLLM_MAX_NUM_SEQS"] = "1"
+os.environ["AIMO3_VLLM_MAX_NUM_BATCHED_TOKENS"] = "2048"
+os.environ["AIMO3_VLLM_ENFORCE_EAGER"] = "1"
 ```
 
 ## 4. Integrate with Kaggle inference server
