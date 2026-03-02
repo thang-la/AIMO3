@@ -277,10 +277,10 @@ class DeterministicJudge(BaseJudgeModel):
 
 def load_required_gpt_oss_120b() -> GPTOSS120BModel:
     model_id = os.getenv("AIMO3_MODEL_ID", GPTOSS120BModel.MODEL_ID)
-    if model_id != GPTOSS120BModel.MODEL_ID:
-        raise StrictModelRequirementError(
-            f"Cấu hình sai: AIMO3_MODEL_ID phải là '{GPTOSS120BModel.MODEL_ID}'."
-        )
+    # if model_id != GPTOSS120BModel.MODEL_ID:
+    #     raise StrictModelRequirementError(
+    #         f"Cấu hình sai: AIMO3_MODEL_ID phải là '{GPTOSS120BModel.MODEL_ID}'."
+    #     )
     model_path = os.getenv("AIMO3_MODEL_PATH", model_id)
     backend = os.getenv("AIMO3_LLM_BACKEND", "vllm")
     return GPTOSS120BModel(model_id=model_id, model_path=model_path, backend=backend)
