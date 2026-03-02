@@ -93,10 +93,10 @@ class GPTOSS120BModel(BaseGeneratorModel):
         if self._loaded:
             return
 
-        if self.model_id != self.MODEL_ID:
-            raise StrictModelRequirementError(
-                f"Model bắt buộc là '{self.MODEL_ID}', hiện tại nhận '{self.model_id}'."
-            )
+        # if self.model_id != self.MODEL_ID:
+        #     raise StrictModelRequirementError(
+        #         f"Model bắt buộc là '{self.MODEL_ID}', hiện tại nhận '{self.model_id}'."
+        #     )
 
         if self.backend == "vllm":
             try:
