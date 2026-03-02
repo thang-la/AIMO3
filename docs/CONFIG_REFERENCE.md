@@ -11,7 +11,7 @@
 - `AIMO3_TP`
   - tensor parallel size for vLLM loader
 - `AIMO3_VLLM_GPU_MEMORY_UTILIZATION`
-  - default `0.98`, commonly `0.99` on Kaggle H100
+  - default `0.95`; tune in range `0.91-0.97` when sampler/KV OOM happens
 - `AIMO3_VLLM_MAX_MODEL_LEN`
   - default `4096`, reduce to `2048` if KV cache OOM
 - `AIMO3_VLLM_MAX_NUM_SEQS`

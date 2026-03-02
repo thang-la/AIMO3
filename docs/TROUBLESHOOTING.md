@@ -37,7 +37,13 @@ export AIMO3_VLLM_MAX_NUM_BATCHED_TOKENS=2048
 export AIMO3_VLLM_ENFORCE_EAGER=1
 ```
 
-The loader now retries with a stricter memory profile automatically, but explicit envs are still recommended for stability.
+If sampler warmup OOM appears (`warming up sampler with 1024 dummy requests`), lower GPU utilization:
+
+```bash
+export AIMO3_VLLM_GPU_MEMORY_UTILIZATION=0.93
+```
+
+The loader retries multiple memory profiles automatically, but explicit envs are still recommended for stability.
 
 ## Slow startup in Kaggle
 

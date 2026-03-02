@@ -56,7 +56,7 @@ class GPTOSS120BModel(BaseGeneratorModel):
         model_id: str = MODEL_ID,
         model_path: str | None = None,
         backend: str | None = None,
-        gpu_memory_utilization: float = 0.98,
+        gpu_memory_utilization: float = 0.95,
         max_model_len: int = 4096,
     ) -> None:
         self.model_id = model_id
@@ -138,7 +138,9 @@ class GPTOSS120BModel(BaseGeneratorModel):
 
     def _build_vllm_engine(self, llm_cls: Any) -> Any:
         tp = int(os.getenv("AIMO3_TP", "1"))
+        low_len = max(1024, self.max_model_len // 2)
         profiles = [
+            # Default constrained profile.
             {
                 "gpu_memory_utilization": self.gpu_memory_utilization,
                 "max_model_len": self.max_model_len,
@@ -147,11 +149,21 @@ class GPTOSS120BModel(BaseGeneratorModel):
                 "enforce_eager": self.enforce_eager,
                 "disable_log_stats": self.disable_log_stats,
             },
+            # KV-cache rescue profile (more GPU share for cache, shorter context).
             {
                 "gpu_memory_utilization": min(max(self.gpu_memory_utilization, 0.99), 0.999),
-                "max_model_len": max(2048, self.max_model_len // 2),
+                "max_model_len": low_len,
                 "max_num_seqs": 1,
-                "max_num_batched_tokens": max(2048, self.max_model_len // 2),
+                "max_num_batched_tokens": low_len,
+                "enforce_eager": True,
+                "disable_log_stats": self.disable_log_stats,
+            },
+            # Sampler warmup OOM rescue profile (leave more headroom).
+            {
+                "gpu_memory_utilization": max(0.90, self.gpu_memory_utilization - 0.04),
+                "max_model_len": low_len,
+                "max_num_seqs": 1,
+                "max_num_batched_tokens": low_len,
                 "enforce_eager": True,
                 "disable_log_stats": self.disable_log_stats,
             },
@@ -170,12 +182,18 @@ class GPTOSS120BModel(BaseGeneratorModel):
             except Exception as exc:  # pragma: no cover
                 msg = str(exc)
                 errors.append(msg)
-                if "No available memory for the cache blocks" not in msg:
+                lower = msg.lower()
+                recoverable = (
+                    "no available memory for the cache blocks" in lower
+                    or "cuda out of memory" in lower
+                    or "warming up sampler" in lower
+                )
+                if not recoverable:
                     raise
         raise StrictModelRequirementError(
             "Không đủ VRAM để khởi tạo GPT-OSS-120B với vLLM. "
             "Hãy giảm AIMO3_VLLM_MAX_MODEL_LEN (ví dụ 2048), giữ AIMO3_VLLM_MAX_NUM_SEQS=1, "
-            "và tăng AIMO3_VLLM_GPU_MEMORY_UTILIZATION (0.99). "
+            "và thử AIMO3_VLLM_GPU_MEMORY_UTILIZATION trong khoảng 0.91-0.97. "
             f"Chi tiết: {errors[-1] if errors else 'unknown error'}"
         )
 
@@ -273,6 +291,10 @@ def _filter_kwargs_for_callable(fn: Any, kwargs: dict[str, Any]) -> dict[str, An
         sig = inspect.signature(fn)
     except Exception:
         return kwargs
+    # If callable accepts **kwargs, keep all keys so version-specific vLLM args are preserved.
+    for p in sig.parameters.values():
+        if p.kind == inspect.Parameter.VAR_KEYWORD:
+            return kwargs
     allowed = set(sig.parameters.keys())
     return {k: v for k, v in kwargs.items() if k in allowed}
 
