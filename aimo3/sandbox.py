@@ -1,253 +1,206 @@
 from __future__ import annotations
 
 import ast
-import contextlib
 import io
 import multiprocessing as mp
-import time
+import re
+import traceback
+from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
-from typing import Any
 
-_ALLOWED_IMPORTS = {"math", "fractions", "itertools", "sympy", "numpy"}
-_ALLOWED_NODES = {
+_SAFE_BUILTINS = {
+    "abs": abs,
+    "all": all,
+    "any": any,
+    "enumerate": enumerate,
+    "float": float,
+    "int": int,
+    "len": len,
+    "list": list,
+    "max": max,
+    "min": min,
+    "pow": pow,
+    "print": print,
+    "range": range,
+    "reversed": reversed,
+    "round": round,
+    "set": set,
+    "sorted": sorted,
+    "sum": sum,
+    "tuple": tuple,
+    "zip": zip,
+}
+
+_ALLOWED_IMPORTS = {"math", "fractions", "itertools", "sympy", "numpy", "collections"}
+_ALLOWED_AST = {
     ast.Module,
     ast.Assign,
-    ast.AnnAssign,
+    ast.AugAssign,
     ast.Expr,
-    ast.Call,
-    ast.Name,
     ast.Load,
     ast.Store,
+    ast.Name,
     ast.Constant,
     ast.BinOp,
     ast.UnaryOp,
-    ast.Add,
-    ast.Sub,
-    ast.Mult,
-    ast.Div,
-    ast.FloorDiv,
-    ast.Mod,
-    ast.Pow,
+    ast.BoolOp,
     ast.Compare,
-    ast.Eq,
-    ast.NotEq,
-    ast.Gt,
-    ast.GtE,
-    ast.Lt,
-    ast.LtE,
-    ast.If,
+    ast.Subscript,
+    ast.Slice,
+    ast.Tuple,
+    ast.List,
+    ast.Dict,
+    ast.Set,
     ast.For,
+    ast.If,
     ast.While,
     ast.Break,
     ast.Continue,
-    ast.List,
-    ast.Tuple,
-    ast.Dict,
-    ast.Set,
-    ast.Subscript,
-    ast.Slice,
-    ast.ListComp,
-    ast.DictComp,
-    ast.SetComp,
-    ast.comprehension,
-    ast.IfExp,
-    ast.BoolOp,
-    ast.And,
-    ast.Or,
-    ast.Not,
-    ast.USub,
-    ast.UAdd,
+    ast.Pass,
+    ast.Call,
+    ast.keyword,
+    ast.Return,
     ast.FunctionDef,
     ast.arguments,
     ast.arg,
-    ast.Return,
-    ast.Pass,
+    ast.Lambda,
     ast.Import,
     ast.ImportFrom,
     ast.Try,
     ast.ExceptHandler,
-}
-_BLOCKED_NAMES = {
-    "open",
-    "exec",
-    "eval",
-    "compile",
-    "__import__",
-    "input",
-    "help",
-    "globals",
-    "locals",
-    "vars",
-    "dir",
-    "getattr",
-    "setattr",
-    "delattr",
+    ast.With,
+    ast.comprehension,
+    ast.ListComp,
+    ast.SetComp,
+    ast.DictComp,
+    ast.GeneratorExp,
+    ast.IfExp,
+    ast.Attribute,
+    ast.Mod,
+    ast.Pow,
+    ast.Mult,
+    ast.Div,
+    ast.FloorDiv,
+    ast.Add,
+    ast.Sub,
+    ast.USub,
+    ast.UAdd,
+    ast.And,
+    ast.Or,
+    ast.Not,
+    ast.Eq,
+    ast.NotEq,
+    ast.Lt,
+    ast.LtE,
+    ast.Gt,
+    ast.GtE,
 }
 
 
-@dataclass(slots=True)
+@dataclass
 class SandboxResult:
     success: bool
     answer: int | None
-    stdout: str
-    stderr: str
-    runtime_ms: float
-    deterministic_score: float
-    flags: list[str]
+    stdout: str = ""
+    stderr: str = ""
+    timeout: bool = False
+    error: str | None = None
 
 
-def _validate_ast(tree: ast.AST) -> list[str]:
-    flags: list[str] = []
+def _validate_ast(code: str) -> None:
+    tree = ast.parse(code, mode="exec")
     for node in ast.walk(tree):
-        if type(node) not in _ALLOWED_NODES:
-            flags.append(f"node_blocked:{type(node).__name__}")
+        if type(node) not in _ALLOWED_AST:
+            raise ValueError(f"Disallowed AST node: {type(node).__name__}")
         if isinstance(node, ast.Import):
             for alias in node.names:
                 if alias.name.split(".")[0] not in _ALLOWED_IMPORTS:
-                    flags.append(f"import_blocked:{alias.name}")
+                    raise ValueError(f"Disallowed import: {alias.name}")
         if isinstance(node, ast.ImportFrom):
-            mod = (node.module or "").split(".")[0]
-            if mod not in _ALLOWED_IMPORTS:
-                flags.append(f"importfrom_blocked:{node.module}")
-        if isinstance(node, ast.Name) and node.id in _BLOCKED_NAMES:
-            flags.append(f"name_blocked:{node.id}")
-        if isinstance(node, ast.Constant) and isinstance(node.value, str):
-            if "/" in node.value or "\\" in node.value:
-                flags.append("path_literal_detected")
-    return flags
+            module = (node.module or "").split(".")[0]
+            if module not in _ALLOWED_IMPORTS:
+                raise ValueError(f"Disallowed import-from module: {node.module}")
+        if isinstance(node, ast.Name) and node.id.startswith("__"):
+            raise ValueError("Dunder names are disallowed")
 
 
-def _run_code(code: str, queue: mp.Queue) -> None:
-    start = time.perf_counter()
-    out_buf = io.StringIO()
-    err_buf = io.StringIO()
-    answer = None
-    success = False
-    flags: list[str] = []
-    with contextlib.redirect_stdout(out_buf), contextlib.redirect_stderr(err_buf):
-        try:
-            env: dict[str, Any] = {
-                "__builtins__": {
-                    "abs": abs,
-                    "all": all,
-                    "any": any,
-                    "enumerate": enumerate,
-                    "int": int,
-                    "float": float,
-                    "range": range,
-                    "len": len,
-                    "sum": sum,
-                    "min": min,
-                    "max": max,
-                    "print": print,
-                    "zip": zip,
-                    "map": map,
-                    "filter": filter,
-                    "list": list,
-                    "tuple": tuple,
-                    "dict": dict,
-                    "set": set,
-                    "sorted": sorted,
-                }
-            }
-            exec(code, env, env)
-            if "ANSWER" in env:
-                answer = int(env["ANSWER"])
-            else:
-                for line in out_buf.getvalue().splitlines()[::-1]:
-                    if "ANSWER" in line.upper():
-                        parts = [p for p in line.replace("=", " ").split() if p.lstrip("-").isdigit()]
-                        if parts:
-                            answer = int(parts[-1])
-                            break
-            success = answer is not None
-        except Exception as exc:  # pragma: no cover - defensive
-            err_buf.write(str(exc))
-    runtime_ms = (time.perf_counter() - start) * 1000.0
-    queue.put(
-        {
-            "success": success,
-            "answer": answer,
-            "stdout": out_buf.getvalue(),
-            "stderr": err_buf.getvalue(),
-            "runtime_ms": runtime_ms,
-            "flags": flags,
-        }
-    )
+def _extract_int_from_stdout(stdout: str) -> int | None:
+    matches = re.findall(r"-?\d+", stdout)
+    if not matches:
+        return None
+    return int(matches[-1])
 
 
-def run_in_sandbox(code: str, timeout_s: float = 2.0, repeat: int = 3) -> SandboxResult:
-    parse_flags: list[str] = []
+def _worker(code: str, queue: mp.Queue, memory_mb: int) -> None:
     try:
-        tree = ast.parse(code)
-        parse_flags = _validate_ast(tree)
-    except SyntaxError as exc:
-        return SandboxResult(
-            success=False,
-            answer=None,
-            stdout="",
-            stderr=f"SyntaxError: {exc}",
-            runtime_ms=0.0,
-            deterministic_score=0.0,
-            flags=["syntax_error"],
+        try:
+            import resource
+
+            memory_bytes = int(memory_mb * 1024 * 1024)
+            resource.setrlimit(resource.RLIMIT_AS, (memory_bytes, memory_bytes))
+        except Exception:
+            # Resource limits are not available on all platforms.
+            pass
+
+        stdout_buffer = io.StringIO()
+        stderr_buffer = io.StringIO()
+        safe_globals = {"__builtins__": _SAFE_BUILTINS}
+        safe_locals: dict[str, object] = {}
+
+        with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
+            exec(compile(code, "<sandbox>", "exec"), safe_globals, safe_locals)
+
+        answer = None
+        if "ANSWER" in safe_locals:
+            answer = int(safe_locals["ANSWER"])  # type: ignore[arg-type]
+        else:
+            answer = _extract_int_from_stdout(stdout_buffer.getvalue())
+
+        queue.put(
+            {
+                "success": answer is not None,
+                "answer": answer,
+                "stdout": stdout_buffer.getvalue(),
+                "stderr": stderr_buffer.getvalue(),
+            }
+        )
+    except Exception as exc:
+        queue.put(
+            {
+                "success": False,
+                "answer": None,
+                "stdout": "",
+                "stderr": traceback.format_exc(),
+                "error": str(exc),
+            }
         )
 
-    if parse_flags:
-        return SandboxResult(
-            success=False,
-            answer=None,
-            stdout="",
-            stderr="blocked by AST policy",
-            runtime_ms=0.0,
-            deterministic_score=0.0,
-            flags=parse_flags,
-        )
 
-    answers: list[int | None] = []
-    last_payload: dict[str, Any] = {
-        "success": False,
-        "answer": None,
-        "stdout": "",
-        "stderr": "",
-        "runtime_ms": 0.0,
-        "flags": [],
-    }
+def run_python_sandbox(code: str, timeout_s: float, memory_mb: int) -> SandboxResult:
+    try:
+        _validate_ast(code)
+    except Exception as exc:
+        return SandboxResult(success=False, answer=None, error=str(exc))
 
-    for _ in range(max(1, repeat)):
-        q: mp.Queue = mp.Queue(maxsize=1)
-        p = mp.Process(target=_run_code, args=(code, q), daemon=True)
-        p.start()
-        p.join(timeout=timeout_s)
-        if p.is_alive():
-            p.terminate()
-            p.join()
-            return SandboxResult(
-                success=False,
-                answer=None,
-                stdout="",
-                stderr="timeout",
-                runtime_ms=timeout_s * 1000.0,
-                deterministic_score=0.0,
-                flags=["timeout"],
-            )
-        if not q.empty():
-            last_payload = q.get()
-        answers.append(last_payload.get("answer"))
+    queue: mp.Queue = mp.Queue()
+    process = mp.Process(target=_worker, args=(code, queue, memory_mb))
+    process.start()
+    process.join(timeout=timeout_s)
 
-    non_none = [a for a in answers if a is not None]
-    if not non_none:
-        det = 0.0
-    else:
-        same = sum(1 for a in answers if a == non_none[0])
-        det = same / len(answers)
+    if process.is_alive():
+        process.terminate()
+        process.join()
+        return SandboxResult(success=False, answer=None, timeout=True, error="timeout")
 
+    if queue.empty():
+        return SandboxResult(success=False, answer=None, error="sandbox returned no result")
+
+    payload = queue.get()
     return SandboxResult(
-        success=bool(last_payload.get("success")),
-        answer=last_payload.get("answer"),
-        stdout=str(last_payload.get("stdout", "")),
-        stderr=str(last_payload.get("stderr", "")),
-        runtime_ms=float(last_payload.get("runtime_ms", 0.0)),
-        deterministic_score=det,
-        flags=list(last_payload.get("flags", [])),
+        success=bool(payload.get("success")),
+        answer=payload.get("answer"),
+        stdout=payload.get("stdout", ""),
+        stderr=payload.get("stderr", ""),
+        timeout=False,
+        error=payload.get("error"),
     )
-

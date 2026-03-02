@@ -1,0 +1,99 @@
+{
+  "pid": "26de63",
+  "answer": 0,
+  "selected_answer": 0,
+  "route": {
+    "domain": "algebra",
+    "difficulty": "medium",
+    "difficulty_score": 0.5766666666666667
+  },
+  "meta": {
+    "hash": "d2ff9c0a4a973673749ab2ebf143ab9213aa31987bbdda4052062b79598bce6b",
+    "modulus": 5,
+    "numbers": [
+      1,
+      1,
+      1,
+      1,
+      1024,
+      2,
+      3,
+      5,
+      7,
+      11,
+      13,
+      15,
+      15,
+      1,
+      2,
+      2,
+      5,
+      7
+    ],
+    "equation_count": 2
+  },
+  "reason": "top_score_after_verification",
+  "candidates": [
+    {
+      "path": "P1_tool",
+      "answer": null,
+      "score": -3.0,
+      "hard_ok": false,
+      "symbolic_ok": false,
+      "random_ok": false,
+      "judge_prob": 0.0,
+      "vote_share": 0.0,
+      "notes": [
+        "sandbox execution failed",
+        "hard constraints failed (range/format)"
+      ]
+    },
+    {
+      "path": "P1_tool",
+      "answer": null,
+      "score": -3.0,
+      "hard_ok": false,
+      "symbolic_ok": false,
+      "random_ok": false,
+      "judge_prob": 0.0,
+      "vote_share": 0.0,
+      "notes": [
+        "sandbox execution failed",
+        "hard constraints failed (range/format)"
+      ]
+    },
+    {
+      "path": "P2_reasoning",
+      "answer": 1,
+      "score": 4.216666666666667,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 0.3333333333333333,
+      "notes": []
+    },
+    {
+      "path": "P2_reasoning",
+      "answer": 0,
+      "score": 4.383333333333333,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 0.6666666666666666,
+      "notes": []
+    },
+    {
+      "path": "P3_backsolve",
+      "answer": 0,
+      "score": 4.383333333333333,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 0.6666666666666666,
+      "notes": []
+    }
+  ]
+}

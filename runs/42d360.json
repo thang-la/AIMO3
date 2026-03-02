@@ -1,0 +1,253 @@
+{
+  "pid": "42d360",
+  "answer": 4,
+  "selected_answer": 4,
+  "route": {
+    "domain": "algebra",
+    "difficulty": "hard",
+    "difficulty_score": 0.9166666666666667
+  },
+  "meta": {
+    "hash": "e6e066d3dff010575d5edc0dd4feadbcfeebe2c50ce3390fcca9406e950bb287",
+    "modulus": 10,
+    "numbers": [
+      1,
+      2,
+      0,
+      0,
+      0,
+      1,
+      10,
+      10,
+      5,
+      10,
+      5
+    ],
+    "equation_count": 2
+  },
+  "reason": "top_score_after_verification",
+  "candidates": [
+    {
+      "path": "P1_tool",
+      "answer": null,
+      "score": -3.0,
+      "hard_ok": false,
+      "symbolic_ok": false,
+      "random_ok": false,
+      "judge_prob": 0.0,
+      "vote_share": 0.0,
+      "notes": [
+        "sandbox execution failed",
+        "hard constraints failed (range/format)"
+      ]
+    },
+    {
+      "path": "P1_tool",
+      "answer": null,
+      "score": -3.0,
+      "hard_ok": false,
+      "symbolic_ok": false,
+      "random_ok": false,
+      "judge_prob": 0.0,
+      "vote_share": 0.0,
+      "notes": [
+        "sandbox execution failed",
+        "hard constraints failed (range/format)"
+      ]
+    },
+    {
+      "path": "P1_tool",
+      "answer": null,
+      "score": -3.0,
+      "hard_ok": false,
+      "symbolic_ok": false,
+      "random_ok": false,
+      "judge_prob": 0.0,
+      "vote_share": 0.0,
+      "notes": [
+        "sandbox execution failed",
+        "hard constraints failed (range/format)"
+      ]
+    },
+    {
+      "path": "P1_tool",
+      "answer": null,
+      "score": -3.0,
+      "hard_ok": false,
+      "symbolic_ok": false,
+      "random_ok": false,
+      "judge_prob": 0.0,
+      "vote_share": 0.0,
+      "notes": [
+        "sandbox execution failed",
+        "hard constraints failed (range/format)"
+      ]
+    },
+    {
+      "path": "P2_reasoning",
+      "answer": 4,
+      "score": 4.35,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 0.2,
+      "notes": []
+    },
+    {
+      "path": "P2_reasoning",
+      "answer": 3,
+      "score": 4.35,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 0.2,
+      "notes": []
+    },
+    {
+      "path": "P2_reasoning",
+      "answer": 4,
+      "score": 4.35,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 0.2,
+      "notes": []
+    },
+    {
+      "path": "P3_backsolve",
+      "answer": 1,
+      "score": 4.249999999999999,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 0.2,
+      "notes": []
+    },
+    {
+      "path": "P3_backsolve",
+      "answer": 3,
+      "score": 4.35,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 0.2,
+      "notes": []
+    },
+    {
+      "path": "P1_tool",
+      "answer": null,
+      "score": -3.0,
+      "hard_ok": false,
+      "symbolic_ok": false,
+      "random_ok": false,
+      "judge_prob": 0.0,
+      "vote_share": 0.0,
+      "notes": [
+        "sandbox execution failed",
+        "hard constraints failed (range/format)"
+      ]
+    },
+    {
+      "path": "P1_tool",
+      "answer": null,
+      "score": -3.0,
+      "hard_ok": false,
+      "symbolic_ok": false,
+      "random_ok": false,
+      "judge_prob": 0.0,
+      "vote_share": 0.0,
+      "notes": [
+        "sandbox execution failed",
+        "hard constraints failed (range/format)"
+      ]
+    },
+    {
+      "path": "P1_tool",
+      "answer": null,
+      "score": -3.0,
+      "hard_ok": false,
+      "symbolic_ok": false,
+      "random_ok": false,
+      "judge_prob": 0.0,
+      "vote_share": 0.0,
+      "notes": [
+        "sandbox execution failed",
+        "hard constraints failed (range/format)"
+      ]
+    },
+    {
+      "path": "P1_tool",
+      "answer": null,
+      "score": -3.0,
+      "hard_ok": false,
+      "symbolic_ok": false,
+      "random_ok": false,
+      "judge_prob": 0.0,
+      "vote_share": 0.0,
+      "notes": [
+        "sandbox execution failed",
+        "hard constraints failed (range/format)"
+      ]
+    },
+    {
+      "path": "P2_reasoning",
+      "answer": 1,
+      "score": 4.1499999999999995,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 0.2,
+      "notes": []
+    },
+    {
+      "path": "P2_reasoning",
+      "answer": 6,
+      "score": 4.1,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 0.1,
+      "notes": []
+    },
+    {
+      "path": "P2_reasoning",
+      "answer": 7,
+      "score": 4.1499999999999995,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 0.2,
+      "notes": []
+    },
+    {
+      "path": "P3_backsolve",
+      "answer": 7,
+      "score": 4.1499999999999995,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 0.2,
+      "notes": []
+    },
+    {
+      "path": "P3_backsolve",
+      "answer": 2,
+      "score": 4.1,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 0.1,
+      "notes": []
+    }
+  ]
+}

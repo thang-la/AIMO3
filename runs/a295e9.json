@@ -1,0 +1,85 @@
+{
+  "pid": "a295e9",
+  "answer": 2,
+  "selected_answer": 2,
+  "route": {
+    "domain": "geometry",
+    "difficulty": "medium",
+    "difficulty_score": 0.35777777777777775
+  },
+  "meta": {
+    "hash": "39f8879ddd7f234722517db957118ed75d15ca09dec84ad2e9f5b30c3fdcf2f4",
+    "modulus": 10,
+    "numbers": [
+      500,
+      500,
+      10,
+      5
+    ],
+    "equation_count": 0
+  },
+  "reason": "top_score_after_verification",
+  "candidates": [
+    {
+      "path": "P1_tool",
+      "answer": null,
+      "score": -3.0,
+      "hard_ok": false,
+      "symbolic_ok": false,
+      "random_ok": false,
+      "judge_prob": 0.0,
+      "vote_share": 0.0,
+      "notes": [
+        "sandbox execution failed",
+        "hard constraints failed (range/format)"
+      ]
+    },
+    {
+      "path": "P1_tool",
+      "answer": null,
+      "score": -3.0,
+      "hard_ok": false,
+      "symbolic_ok": false,
+      "random_ok": false,
+      "judge_prob": 0.0,
+      "vote_share": 0.0,
+      "notes": [
+        "sandbox execution failed",
+        "hard constraints failed (range/format)"
+      ]
+    },
+    {
+      "path": "P2_reasoning",
+      "answer": 2,
+      "score": 4.216666666666667,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 0.3333333333333333,
+      "notes": []
+    },
+    {
+      "path": "P2_reasoning",
+      "answer": 3,
+      "score": 4.216666666666667,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 0.3333333333333333,
+      "notes": []
+    },
+    {
+      "path": "P3_backsolve",
+      "answer": 4,
+      "score": 4.216666666666667,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 0.3333333333333333,
+      "notes": []
+    }
+  ]
+}

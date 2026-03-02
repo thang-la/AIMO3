@@ -1,0 +1,33 @@
+{
+  "pid": "id0",
+  "answer": 30,
+  "selected_answer": 30,
+  "route": {
+    "domain": "number_theory",
+    "difficulty": "easy",
+    "difficulty_score": 0.15222222222222223
+  },
+  "meta": {
+    "hash": "958c1ba1fd201c857c1c9ffc9163afe70620aefcec3cfa462ba0be0ddb5df586",
+    "modulus": 97,
+    "numbers": [
+      1000,
+      97
+    ],
+    "equation_count": 0
+  },
+  "reason": "top_score_after_verification",
+  "candidates": [
+    {
+      "path": "P0_symbolic",
+      "answer": 30,
+      "score": 4.95,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.45,
+      "vote_share": 1.0,
+      "notes": []
+    }
+  ]
+}

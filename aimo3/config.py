@@ -1,65 +1,62 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 
 
-@dataclass(slots=True)
-class BudgetConfig:
-    easy_seconds: float = 20.0
-    medium_seconds: float = 60.0
-    hard_seconds: float = 360.0
-    default_token_budget: int = 1800
-    sandbox_seconds_per_run: float = 2.0
-    sandbox_max_runs: int = 4
+@dataclass(frozen=True)
+class DifficultyBudgetConfig:
+    time_limit_s: float
+    max_attempts: int
+    max_output_tokens: int
+    tool_runs: int
 
 
-@dataclass(slots=True)
-class StopConfig:
-    stop_pi_a: float = 0.92
-    stop_pi_b: float = 0.88
-    hard_stop_pi_a: float = 0.88
-    hard_stop_pi_b: float = 0.84
-    min_clusters_a: int = 1
-    min_clusters_b: int = 2
-    max_fragility: float = 0.45
-    evi_stop_floor: float = 0.0
+@dataclass(frozen=True)
+class VerificationWeights:
+    hard_constraints: float = 2.0
+    symbolic_consistency: float = 1.5
+    randomized_tests: float = 1.0
+    judge_prob: float = 1.0
+    self_consistency: float = 0.5
+    contradiction_penalty: float = -2.0
+    sandbox_penalty: float = -1.0
 
 
-@dataclass(slots=True)
-class AASConfig:
-    flat_tau: float = 0.65
-    small_margin: float = 0.08
-    high_uncertainty: float = 0.25
-    high_flip_rate: float = 0.30
-    min_difficulty: float = 0.50
-    sampling_temperature: float = 1.4
-    cluster_bonus_scale: float = 0.15
-
-
-@dataclass(slots=True)
-class BeliefConfig:
-    new_answer_log_prior: float = -13.815510557964274  # log(1e-6)
-    other_log_prior: float = 0.0
-    hard_refute_M: float = 20.0
-    mild_refute_mu: float = 1.0
-    weak_support_nu: float = 0.5
-
-
-@dataclass(slots=True)
-class EVIConfig:
-    lambda_cost: float = 0.01
-    eta_timeout: float = 0.2
-    gain_min_per_sec: float = 0.002
-    gain_streak_k: int = 3
-
-
-@dataclass(slots=True)
-class SystemConfig:
-    budget: BudgetConfig = field(default_factory=BudgetConfig)
-    stop: StopConfig = field(default_factory=StopConfig)
-    aas: AASConfig = field(default_factory=AASConfig)
-    belief: BeliefConfig = field(default_factory=BeliefConfig)
-    evi: EVIConfig = field(default_factory=EVIConfig)
-
-
-DEFAULT_CONFIG = SystemConfig()
+@dataclass(frozen=True)
+class SolverConfig:
+    easy: DifficultyBudgetConfig = field(
+        default_factory=lambda: DifficultyBudgetConfig(
+            time_limit_s=20.0,
+            max_attempts=2,
+            max_output_tokens=1200,
+            tool_runs=1,
+        )
+    )
+    medium: DifficultyBudgetConfig = field(
+        default_factory=lambda: DifficultyBudgetConfig(
+            time_limit_s=60.0,
+            max_attempts=5,
+            max_output_tokens=2200,
+            tool_runs=2,
+        )
+    )
+    hard: DifficultyBudgetConfig = field(
+        default_factory=lambda: DifficultyBudgetConfig(
+            time_limit_s=240.0,
+            max_attempts=10,
+            max_output_tokens=4500,
+            tool_runs=5,
+        )
+    )
+    sandbox_timeout_s: float = 4.0
+    sandbox_memory_mb: int = 1024
+    confidence_threshold: float = 4.2
+    vote_share_threshold: float = 0.5
+    max_candidates: int = 80
+    answer_upper_bound: int = 99999
+    global_modulus_fallback: int = 100000
+    run_log_dir: Path = field(default_factory=lambda: Path("runs"))
+    enable_hard_mode: bool = True
+    allow_reference_lookup: bool = False
+    reference_path: Path = field(default_factory=lambda: Path("reference.csv"))

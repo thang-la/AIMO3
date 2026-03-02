@@ -1,0 +1,88 @@
+{
+  "pid": "selfplay-19",
+  "answer": 7763,
+  "selected_answer": 7763,
+  "route": {
+    "domain": "number_theory",
+    "difficulty": "medium",
+    "difficulty_score": 0.4366666666666667
+  },
+  "meta": {
+    "hash": "9953d0de210a20e1e10607b77e88f7041d971cf62ff8d52581298d95649f1010",
+    "modulus": 10007,
+    "numbers": [
+      32472,
+      2,
+      16908,
+      2,
+      32472,
+      16908,
+      10007
+    ],
+    "equation_count": 1
+  },
+  "reason": "top_score_after_verification",
+  "candidates": [
+    {
+      "path": "P1_tool",
+      "answer": null,
+      "score": -3.0,
+      "hard_ok": false,
+      "symbolic_ok": false,
+      "random_ok": false,
+      "judge_prob": 0.0,
+      "vote_share": 0.0,
+      "notes": [
+        "sandbox execution failed",
+        "hard constraints failed (range/format)"
+      ]
+    },
+    {
+      "path": "P1_tool",
+      "answer": null,
+      "score": -3.0,
+      "hard_ok": false,
+      "symbolic_ok": false,
+      "random_ok": false,
+      "judge_prob": 0.0,
+      "vote_share": 0.0,
+      "notes": [
+        "sandbox execution failed",
+        "hard constraints failed (range/format)"
+      ]
+    },
+    {
+      "path": "P2_reasoning",
+      "answer": 7763,
+      "score": 4.216666666666667,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 0.3333333333333333,
+      "notes": []
+    },
+    {
+      "path": "P2_reasoning",
+      "answer": 6121,
+      "score": 4.216666666666667,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 0.3333333333333333,
+      "notes": []
+    },
+    {
+      "path": "P3_backsolve",
+      "answer": 5186,
+      "score": 4.216666666666667,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 0.3333333333333333,
+      "notes": []
+    }
+  ]
+}

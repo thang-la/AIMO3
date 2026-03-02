@@ -1,0 +1,50 @@
+{
+  "pid": "selfplay-11",
+  "answer": 21785,
+  "selected_answer": 21785,
+  "route": {
+    "domain": "geometry",
+    "difficulty": "easy",
+    "difficulty_score": 0.33611111111111114
+  },
+  "meta": {
+    "hash": "22c4b3a2ac499543cc5b2a3047e575d2424b3d910a7ba384f0d7d2b3d211f62b",
+    "modulus": 100000,
+    "numbers": [
+      293,
+      129,
+      341,
+      2,
+      100000
+    ],
+    "equation_count": 1
+  },
+  "reason": "top_score_after_verification",
+  "candidates": [
+    {
+      "path": "P1_tool",
+      "answer": null,
+      "score": -3.0,
+      "hard_ok": false,
+      "symbolic_ok": false,
+      "random_ok": false,
+      "judge_prob": 0.0,
+      "vote_share": 0.0,
+      "notes": [
+        "sandbox execution failed",
+        "hard constraints failed (range/format)"
+      ]
+    },
+    {
+      "path": "P2_reasoning",
+      "answer": 21785,
+      "score": 4.55,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 1.0,
+      "notes": []
+    }
+  ]
+}

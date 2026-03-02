@@ -1,113 +1,128 @@
 from __future__ import annotations
 
-import random
-from dataclasses import asdict
+from collections import Counter
 
-from .sandbox import run_in_sandbox
-from .types import Candidate, VerificationResult
-
-try:  # pragma: no cover - optional dependency
-    import sympy as sp
-except Exception:  # pragma: no cover
-    sp = None
+from aimo3.config import SolverConfig, VerificationWeights
+from aimo3.llm import NeuralJudge
+from aimo3.models import Candidate, ProblemMetadata, VerificationResult
+from aimo3.sandbox import run_python_sandbox
 
 
-def check_range(ans: int, bounds: tuple[int, int] = (0, 99999)) -> bool:
-    lo, hi = bounds
-    return lo <= int(ans) <= hi
+class Verifier:
+    def __init__(self, config: SolverConfig, judge: NeuralJudge):
+        self.config = config
+        self.weights = VerificationWeights()
+        self.judge = judge
 
+    def _normalize_answer(self, ans: int | None, meta: ProblemMetadata) -> int | None:
+        if ans is None:
+            return None
+        if meta.modulus is not None and meta.modulus > 0:
+            ans = ans % meta.modulus
+        ans = ans % self.config.global_modulus_fallback
+        return int(ans)
 
-def check_modulus(ans: int, meta: dict) -> bool:
-    mod = meta.get("modulus")
-    if mod is None:
-        return True
-    if not (isinstance(mod, int) and mod > 0):
-        return False
-    if meta.get("answer_should_be_remainder", False):
-        return 0 <= int(ans) < mod
-    return True
+    def _check_range(self, ans: int | None) -> bool:
+        if ans is None:
+            return False
+        return 0 <= ans <= self.config.answer_upper_bound
 
+    def verify_candidate(self, candidate: Candidate, problem: str, meta: ProblemMetadata) -> VerificationResult:
+        vr = VerificationResult(candidate=candidate)
+        answer = candidate.answer
+        artifacts: dict[str, object] = {}
 
-def check_integer_constraints(ans: int) -> bool:
-    return isinstance(ans, int)
+        if answer is None and candidate.python_code:
+            sandbox = run_python_sandbox(
+                candidate.python_code,
+                timeout_s=self.config.sandbox_timeout_s,
+                memory_mb=self.config.sandbox_memory_mb,
+            )
+            artifacts["sandbox"] = {
+                "success": sandbox.success,
+                "timeout": sandbox.timeout,
+                "stdout": sandbox.stdout,
+                "stderr": sandbox.stderr,
+                "error": sandbox.error,
+            }
+            if sandbox.success:
+                answer = sandbox.answer
+                artifacts["tool_ok"] = True
+            else:
+                artifacts["tool_ok"] = False
+                vr.sandbox_error = True
+                vr.notes.append("sandbox execution failed")
 
+        normalized = self._normalize_answer(answer, meta)
+        vr.normalized_answer = normalized
+        vr.hard_ok = self._check_range(normalized)
+        if not vr.hard_ok:
+            vr.notes.append("hard constraints failed (range/format)")
 
-def symbolic_checks_if_possible(latex: str, ans: int, meta: dict, constraints: dict) -> bool:
-    if not sp:
-        return False
-    equations = constraints.get("equations", [])
-    if not equations:
-        return False
-    symbols = {str(s): s for s in sp.symbols("a b c d e f g h i j k m n p q r s t u v w x y z")}
-    local = dict(symbols)
-    local["ans"] = ans
-    passed = 0
-    seen = 0
-    for eq in equations[:8]:
-        seen += 1
-        if "=" in eq:
-            l, r = eq.split("=", 1)
-            expr = f"({l})-({r})"
+        # Lightweight symbolic consistency heuristic:
+        # if equations exist and candidate exists, require at least integer answer.
+        vr.symbolic_ok = vr.hard_ok and (len(meta.extracted_equations) == 0 or normalized is not None)
+
+        # Randomized check approximation: candidates from tool path are trusted more.
+        vr.random_ok = vr.hard_ok and candidate.path.value in {"P1_tool", "hard_mode"}
+
+        if normalized is not None:
+            vr.judge_prob = self.judge.score(problem, candidate.trace, normalized, artifacts)
         else:
-            expr = eq
-        try:
-            expr_obj = sp.sympify(expr, locals=local)
-            val = expr_obj.subs({symbols.get("x", 0): ans}) if hasattr(expr_obj, "subs") else expr_obj
-            if val == 0:
-                passed += 1
-        except Exception:
-            continue
-    return seen > 0 and passed >= max(1, seen // 2)
+            vr.judge_prob = 0.0
 
+        contradiction = bool(not vr.hard_ok)
+        vr.contradiction = contradiction
 
-def randomized_tests_if_possible(cand: Candidate, meta: dict, trials: int = 10) -> float:
-    if not cand.tool_code:
-        return 0.0
-    hits = 0
-    for _ in range(trials):
-        salt = random.randint(1, 1_000_000)
-        test_code = cand.tool_code + f"\n_ = {salt}  # deterministic perturb noop\n"
-        out = run_in_sandbox(test_code, timeout_s=1.0, repeat=1)
-        if out.success and out.answer == cand.answer:
-            hits += 1
-    return hits / trials if trials else 0.0
+        score = 0.0
+        score += self.weights.hard_constraints * float(vr.hard_ok)
+        score += self.weights.symbolic_consistency * float(vr.symbolic_ok)
+        score += self.weights.randomized_tests * float(vr.random_ok)
+        score += self.weights.judge_prob * float(vr.judge_prob)
+        score += self.weights.self_consistency * vr.self_consistency_vote_share
+        if contradiction:
+            score += self.weights.contradiction_penalty
+        if vr.sandbox_error:
+            score += self.weights.sandbox_penalty
+        vr.score = score
+        vr.artifacts = artifacts
+        return vr
 
+    def verify_batch(self, candidates: list[Candidate], problem: str, meta: ProblemMetadata) -> list[VerificationResult]:
+        return [self.verify_candidate(c, problem, meta) for c in candidates]
 
-def verify_shallow(cand: Candidate, meta: dict, constraints: dict) -> VerificationResult:
-    v = VerificationResult(answer=cand.answer)
-    range_ok = check_range(cand.answer, constraints.get("range", (0, 99999)))
-    mod_ok = check_modulus(cand.answer, meta)
-    int_ok = check_integer_constraints(cand.answer)
-    v.hard_ok = bool(range_ok and mod_ok and int_ok)
-    v.shallow_ok = v.hard_ok
-    if not range_ok:
-        v.flags.append("range_fail")
-    if not mod_ok:
-        v.flags.append("modulus_fail")
-    if not int_ok:
-        v.flags.append("integer_fail")
-    return v
+    def apply_vote_share(self, verified: list[VerificationResult]) -> None:
+        valid_answers = [v.normalized_answer for v in verified if v.hard_ok and v.normalized_answer is not None]
+        if not valid_answers:
+            return
+        counts = Counter(valid_answers)
+        total = sum(counts.values())
+        for item in verified:
+            if item.normalized_answer is None:
+                item.self_consistency_vote_share = 0.0
+            else:
+                item.self_consistency_vote_share = counts[item.normalized_answer] / total
+            item.score += self.weights.self_consistency * item.self_consistency_vote_share
 
+    def confident_enough(self, verified: list[VerificationResult]) -> bool:
+        if not verified:
+            return False
+        self.apply_vote_share(verified)
+        best = max(verified, key=lambda x: x.score)
+        return (
+            best.score >= self.config.confidence_threshold
+            and best.self_consistency_vote_share >= self.config.vote_share_threshold
+        )
 
-def verify_deep(cand: Candidate, meta: dict, constraints: dict, timeout_s: float = 2.0) -> VerificationResult:
-    v = verify_shallow(cand, meta, constraints)
-    if not v.hard_ok:
-        return v
-
-    if cand.tool_code:
-        out = run_in_sandbox(cand.tool_code, timeout_s=timeout_s, repeat=3)
-        v.tool_ok = bool(out.success and out.answer == cand.answer)
-        v.tool_timeout = "timeout" in out.flags
-        v.tool_error = bool(out.stderr and not out.success)
-        v.artifacts["sandbox"] = asdict(out)
-        if out.success and out.answer is not None and out.answer != cand.answer:
-            v.flags.append("tool_answer_mismatch")
-            v.contradictions += 1
-
-    v.symbolic_ok = symbolic_checks_if_possible(meta.get("raw_latex", ""), cand.answer, meta, constraints)
-    v.random_ok_rate = randomized_tests_if_possible(cand, meta, trials=6)
-    v.deep_ok = v.hard_ok and (v.symbolic_ok or v.tool_ok or v.random_ok_rate >= 0.66)
-
-    if not v.deep_ok:
-        v.flags.append("deep_unconfirmed")
-    return v
+    def select_final(self, verified: list[VerificationResult]) -> tuple[VerificationResult | None, str]:
+        if not verified:
+            return None, "no_candidates"
+        self.apply_vote_share(verified)
+        sorted_verified = sorted(
+            verified,
+            key=lambda x: (x.score, x.self_consistency_vote_share, x.judge_prob),
+            reverse=True,
+        )
+        best = sorted_verified[0]
+        reason = "top_score_after_verification"
+        return best, reason

@@ -1,0 +1,48 @@
+{
+  "pid": "selfplay-15",
+  "answer": 64201,
+  "selected_answer": 64201,
+  "route": {
+    "domain": "number_theory",
+    "difficulty": "easy",
+    "difficulty_score": 0.11944444444444444
+  },
+  "meta": {
+    "hash": "e59f5b49f600ee010f5275a0973b7bc09d074f037a79008338e79b975002712c",
+    "modulus": 99991,
+    "numbers": [
+      8,
+      11,
+      99991
+    ],
+    "equation_count": 0
+  },
+  "reason": "top_score_after_verification",
+  "candidates": [
+    {
+      "path": "P1_tool",
+      "answer": null,
+      "score": -3.0,
+      "hard_ok": false,
+      "symbolic_ok": false,
+      "random_ok": false,
+      "judge_prob": 0.0,
+      "vote_share": 0.0,
+      "notes": [
+        "sandbox execution failed",
+        "hard constraints failed (range/format)"
+      ]
+    },
+    {
+      "path": "P2_reasoning",
+      "answer": 64201,
+      "score": 4.55,
+      "hard_ok": true,
+      "symbolic_ok": true,
+      "random_ok": false,
+      "judge_prob": 0.55,
+      "vote_share": 1.0,
+      "notes": []
+    }
+  ]
+}

@@ -1,13 +1,20 @@
-from __future__ import annotations
-
 from aimo3.controller import AIMO3Solver
-from aimo3.models import DeterministicHeuristicModel
+from aimo3.kaggle_server import predict
 
 
-def test_solver_returns_int_in_range() -> None:
-    stub = DeterministicHeuristicModel()
-    solver = AIMO3Solver(main_model=stub, fast_model=stub)
-    problem = "Find the remainder when 123456789 is divided by 97."
-    ans = solver.solve_one("p1", problem, run_seed=42)
-    assert isinstance(ans, int)
-    assert 0 <= ans <= 99999
+def test_solver_smoke():
+    solver = AIMO3Solver()
+    result = solver.solve_one("t0", "What is the remainder when 123456 is divided by 97?")
+    assert isinstance(result.answer, int)
+    assert 0 <= result.answer <= 99999
+
+
+def test_kaggle_predict_smoke():
+    out = predict(["x1"], ["What is the remainder when 11^5 is divided by 13?"])
+    if hasattr(out, "to_dict"):
+        payload = out.to_dict(as_series=False) if "polars" in str(type(out)).lower() else out.to_dict()
+        assert "id" in payload
+        assert "answer" in payload
+    else:
+        assert "id" in out
+        assert "answer" in out
