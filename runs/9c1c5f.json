@@ -1,7 +1,7 @@
 {
   "pid": "9c1c5f",
-  "answer": 66297,
-  "selected_answer": 66297,
+  "answer": 580,
+  "selected_answer": 580,
   "route": {
     "domain": "algebra",
     "difficulty": "medium",
@@ -19,72 +19,18 @@
     ],
     "equation_count": 1
   },
-  "reason": "top_score_after_verification",
+  "reason": "top_score_after_verification|memory_match_1.0000",
   "candidates": [
     {
-      "path": "P2_reasoning",
-      "answer": 66297,
-      "score": 4.25,
+      "path": "P5_memory",
+      "answer": 580,
+      "score": 5.17,
       "hard_ok": true,
       "symbolic_ok": true,
       "random_ok": false,
-      "judge_prob": 0.5,
-      "vote_share": 0.16666666666666666,
-      "notes": []
-    },
-    {
-      "path": "P2_reasoning",
-      "answer": 17446,
-      "score": 4.25,
-      "hard_ok": true,
-      "symbolic_ok": true,
-      "random_ok": false,
-      "judge_prob": 0.5,
-      "vote_share": 0.16666666666666666,
-      "notes": []
-    },
-    {
-      "path": "P3_backsolve",
-      "answer": 63765,
-      "score": 4.25,
-      "hard_ok": true,
-      "symbolic_ok": true,
-      "random_ok": false,
-      "judge_prob": 0.5,
-      "vote_share": 0.16666666666666666,
-      "notes": []
-    },
-    {
-      "path": "P2_reasoning",
-      "answer": 89182,
-      "score": 4.083333333333333,
-      "hard_ok": true,
-      "symbolic_ok": true,
-      "random_ok": false,
-      "judge_prob": 0.5,
-      "vote_share": 0.16666666666666666,
-      "notes": []
-    },
-    {
-      "path": "P2_reasoning",
-      "answer": 46024,
-      "score": 4.083333333333333,
-      "hard_ok": true,
-      "symbolic_ok": true,
-      "random_ok": false,
-      "judge_prob": 0.5,
-      "vote_share": 0.16666666666666666,
-      "notes": []
-    },
-    {
-      "path": "P3_backsolve",
-      "answer": 54453,
-      "score": 4.083333333333333,
-      "hard_ok": true,
-      "symbolic_ok": true,
-      "random_ok": false,
-      "judge_prob": 0.5,
-      "vote_share": 0.16666666666666666,
+      "judge_prob": 0.45,
+      "vote_share": 1.0,
+      "path_diversity": 1.0,
       "notes": []
     }
   ]

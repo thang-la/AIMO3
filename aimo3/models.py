@@ -24,6 +24,8 @@ class PathType(str, Enum):
     P1_TOOL = "P1_tool"
     P2_REASONING = "P2_reasoning"
     P3_BACKSOLVE = "P3_backsolve"
+    P4_REPAIR = "P4_repair"
+    P5_MEMORY = "P5_memory"
     HARD_MODE = "hard_mode"
 
 
@@ -83,6 +85,7 @@ class VerificationResult:
     notes: list[str] = field(default_factory=list)
     artifacts: dict[str, Any] = field(default_factory=dict)
     self_consistency_vote_share: float = 0.0
+    path_diversity: float = 0.0
 
 
 @dataclass
@@ -123,6 +126,7 @@ class SolveResult:
                     "random_ok": c.random_ok,
                     "judge_prob": c.judge_prob,
                     "vote_share": c.self_consistency_vote_share,
+                    "path_diversity": c.path_diversity,
                     "notes": c.notes,
                 }
                 for c in self.candidates

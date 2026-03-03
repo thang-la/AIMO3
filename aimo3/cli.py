@@ -39,6 +39,18 @@ def _build_solver(args: argparse.Namespace) -> AIMO3Solver:
         config = replace(config, allow_demo_fallback=True)
     if getattr(args, "no_enforce_real_backend", False):
         config = replace(config, enforce_real_backend=False)
+    if getattr(args, "allow_reference_lookup", False):
+        config = replace(config, allow_reference_lookup=True)
+    if getattr(args, "reference_path", None):
+        config = replace(config, reference_path=Path(args.reference_path))
+    if getattr(args, "debug", False):
+        config = replace(config, debug_enabled=True)
+    if getattr(args, "debug_raw_output", False):
+        config = replace(config, debug_include_raw_output=True)
+    if getattr(args, "debug_file", None):
+        config = replace(config, debug_file_path=Path(args.debug_file))
+    if getattr(args, "debug_max_chars", None):
+        config = replace(config, debug_max_chars=int(args.debug_max_chars))
     return AIMO3Solver(config=config)
 
 
@@ -97,6 +109,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_one.add_argument("--model-fast")
     p_one.add_argument("--allow-demo-fallback", action="store_true")
     p_one.add_argument("--no-enforce-real-backend", action="store_true")
+    p_one.add_argument("--allow-reference-lookup", action="store_true")
+    p_one.add_argument("--reference-path")
+    p_one.add_argument("--debug", action="store_true")
+    p_one.add_argument("--debug-raw-output", action="store_true")
+    p_one.add_argument("--debug-file")
+    p_one.add_argument("--debug-max-chars", type=int)
     p_one.set_defaults(func=cmd_solve_one)
 
     p_csv = sub.add_parser("solve-csv", help="solve CSV input -> submission")
@@ -110,6 +128,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_csv.add_argument("--model-fast")
     p_csv.add_argument("--allow-demo-fallback", action="store_true")
     p_csv.add_argument("--no-enforce-real-backend", action="store_true")
+    p_csv.add_argument("--allow-reference-lookup", action="store_true")
+    p_csv.add_argument("--reference-path")
+    p_csv.add_argument("--debug", action="store_true")
+    p_csv.add_argument("--debug-raw-output", action="store_true")
+    p_csv.add_argument("--debug-file")
+    p_csv.add_argument("--debug-max-chars", type=int)
     p_csv.set_defaults(func=cmd_solve_csv)
     return parser
 

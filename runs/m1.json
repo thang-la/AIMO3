@@ -1,25 +1,18 @@
 {
-  "pid": "424e18",
-  "answer": 21818,
-  "selected_answer": 21818,
+  "pid": "m1",
+  "answer": 72,
+  "selected_answer": 72,
   "route": {
-    "domain": "combinatorics",
-    "difficulty": "medium",
-    "difficulty_score": 0.5522222222222222
+    "domain": "number_theory",
+    "difficulty": "easy",
+    "difficulty_score": 0.20222222222222225
   },
   "meta": {
-    "hash": "c28a43786aec8c729c41c4057f7097eba736f4cadefc1cf277a3e10aaf64e478",
-    "modulus": 100000,
+    "hash": "544f65f0b3e4925b0d5989ccfca1a4bc66ef1ec0a506d0d9f48aefe8987da2ba",
+    "modulus": 97,
     "numbers": [
-      2,
-      20,
-      20,
-      0,
-      2,
-      20,
-      10,
-      10,
-      5
+      123456,
+      97
     ],
     "equation_count": 0
   },
@@ -27,7 +20,7 @@
   "candidates": [
     {
       "path": "P5_memory",
-      "answer": 21818,
+      "answer": 72,
       "score": 5.17,
       "hard_ok": true,
       "symbolic_ok": true,

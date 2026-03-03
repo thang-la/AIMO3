@@ -19,6 +19,8 @@ class VerificationWeights:
     randomized_tests: float = 1.0
     judge_prob: float = 1.0
     self_consistency: float = 0.5
+    path_diversity: float = 0.6
+    validator_bonus: float = 0.8
     contradiction_penalty: float = -2.0
     sandbox_penalty: float = -1.0
 
@@ -53,18 +55,18 @@ class SolverConfig:
     )
     medium: DifficultyBudgetConfig = field(
         default_factory=lambda: DifficultyBudgetConfig(
-            time_limit_s=60.0,
-            max_attempts=5,
-            max_output_tokens=2200,
-            tool_runs=2,
+            time_limit_s=90.0,
+            max_attempts=8,
+            max_output_tokens=2600,
+            tool_runs=3,
         )
     )
     hard: DifficultyBudgetConfig = field(
         default_factory=lambda: DifficultyBudgetConfig(
-            time_limit_s=240.0,
-            max_attempts=10,
-            max_output_tokens=4500,
-            tool_runs=5,
+            time_limit_s=360.0,
+            max_attempts=16,
+            max_output_tokens=6000,
+            tool_runs=8,
         )
     )
     sandbox_timeout_s: float = 4.0
@@ -72,6 +74,9 @@ class SolverConfig:
     confidence_threshold: float = 4.2
     vote_share_threshold: float = 0.5
     max_candidates: int = 80
+    max_repair_rounds: int = 2
+    repair_top_k: int = 3
+    require_path_diversity_for_confidence: bool = True
     answer_upper_bound: int = 99999
     global_modulus_fallback: int = 100000
     run_log_dir: Path = field(default_factory=lambda: Path("runs"))
@@ -79,5 +84,10 @@ class SolverConfig:
     enforce_real_backend: bool = True
     allow_demo_fallback: bool = False
     allow_reference_lookup: bool = False
+    reference_similarity_threshold: float = 0.985
     reference_path: Path = field(default_factory=lambda: Path("reference.csv"))
+    debug_enabled: bool = False
+    debug_include_raw_output: bool = False
+    debug_max_chars: int = 1200
+    debug_file_path: Path | None = None
     llm: LLMRuntimeConfig = field(default_factory=LLMRuntimeConfig)

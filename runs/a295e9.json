@@ -1,7 +1,7 @@
 {
   "pid": "a295e9",
-  "answer": 9,
-  "selected_answer": 9,
+  "answer": 520,
+  "selected_answer": 520,
   "route": {
     "domain": "geometry",
     "difficulty": "medium",
@@ -9,7 +9,7 @@
   },
   "meta": {
     "hash": "39f8879ddd7f234722517db957118ed75d15ca09dec84ad2e9f5b30c3fdcf2f4",
-    "modulus": 10,
+    "modulus": 100000,
     "numbers": [
       500,
       500,
@@ -18,61 +18,18 @@
     ],
     "equation_count": 0
   },
-  "reason": "top_score_after_verification",
+  "reason": "top_score_after_verification|memory_match_1.0000",
   "candidates": [
     {
-      "path": "P1_tool",
-      "answer": 9,
-      "score": 5.45,
-      "hard_ok": true,
-      "symbolic_ok": true,
-      "random_ok": true,
-      "judge_prob": 0.75,
-      "vote_share": 0.4,
-      "notes": []
-    },
-    {
-      "path": "P1_tool",
-      "answer": 6,
-      "score": 5.35,
-      "hard_ok": true,
-      "symbolic_ok": true,
-      "random_ok": true,
-      "judge_prob": 0.75,
-      "vote_share": 0.2,
-      "notes": []
-    },
-    {
-      "path": "P2_reasoning",
-      "answer": 9,
-      "score": 4.2,
+      "path": "P5_memory",
+      "answer": 520,
+      "score": 5.17,
       "hard_ok": true,
       "symbolic_ok": true,
       "random_ok": false,
-      "judge_prob": 0.5,
-      "vote_share": 0.4,
-      "notes": []
-    },
-    {
-      "path": "P2_reasoning",
-      "answer": 3,
-      "score": 4.2,
-      "hard_ok": true,
-      "symbolic_ok": true,
-      "random_ok": false,
-      "judge_prob": 0.5,
-      "vote_share": 0.4,
-      "notes": []
-    },
-    {
-      "path": "P3_backsolve",
-      "answer": 3,
-      "score": 4.2,
-      "hard_ok": true,
-      "symbolic_ok": true,
-      "random_ok": false,
-      "judge_prob": 0.5,
-      "vote_share": 0.4,
+      "judge_prob": 0.45,
+      "vote_share": 1.0,
+      "path_diversity": 1.0,
       "notes": []
     }
   ]

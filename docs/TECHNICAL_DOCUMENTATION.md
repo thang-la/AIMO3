@@ -21,10 +21,11 @@ The default runtime backend is **strict real-model mode** (`CompetitionLLMBacken
 - `aimo3/llm.py`: generation backend interface, competition LLM backend (vLLM/Transformers), strict runtime checks, heuristic fallback, and judge placeholder.
 - `aimo3/sandbox.py`: safe Python executor (AST allowlist + timeout + memory cap).
 - `aimo3/symbolic.py`: P0 symbolic-first solver rules (safe arithmetic + optional SymPy linear case).
-- `aimo3/generator.py`: multi-path candidate generation (P1/P2/P3).
-- `aimo3/verifier.py`: hard checks, tool execution, scoring, vote-share consistency, final selection.
+- `aimo3/generator.py`: multi-path candidate generation (P1/P2/P3) and repair generation (P4).
+- `aimo3/verifier.py`: hard checks, tool/validator execution, scoring with vote + path-diversity, final selection.
 - `aimo3/hard_mode.py`: bounded hard-mode search loop.
 - `aimo3/controller.py`: orchestration class `AIMO3Solver`.
+- `aimo3/memory.py`: optional retrieval over solved references (exact/near matches).
 - `aimo3/kaggle_server.py`: `predict(id_series, problem_series)` entrypoint.
 - `aimo3/cli.py`: local CLI (`solve-one`, `solve-csv`).
 - `aimo3/training/*`: synthetic generation, contamination filtering, self-play, verifier pair construction.
@@ -49,8 +50,11 @@ The default runtime backend is **strict real-model mode** (`CompetitionLLMBacken
    - `P1`: tool-integrated candidates (Python snippets)
    - `P2`: reasoning candidates
    - `P3`: backsolve/constraint candidates
+   - `P4`: repair candidates generated from top prior attempts
+   - `P5` (optional): memory retrieval candidate for repeated/near-seen statements
 5. Verification for each candidate:
    - sandbox execution if code is present
+   - optional `validator_code` execution for independent acceptance/rejection
    - hard constraints (integer/range + modulus normalization)
    - symbolic consistency heuristic
    - randomized check proxy
@@ -84,11 +88,14 @@ score =
 + 1.0 * random_ok
 + 1.0 * judge_prob
 + 0.5 * vote_share
++ 0.6 * path_diversity
++ 0.8 * validator_bonus
 - 2.0 * contradiction
 - 1.0 * sandbox_error
 ```
 
 `vote_share` is computed from answer agreement among valid candidates.
+`path_diversity` rewards agreement across independent reasoning paths.
 
 ## 5. Safe Tool Sandbox
 
@@ -110,6 +117,7 @@ This gives a practical safe-by-default execution path for tool-generated code.
 - keeps a global lazy singleton solver (`_SOLVER`) to satisfy startup constraints
 - keeps one run seed (`_RUN_SEED`) for stable rerun behavior
 - reads backend/model settings from environment variables (`AIMO3_BACKEND`, `AIMO3_MODEL_MAIN`, `AIMO3_MODEL_FAST`, etc.)
+- auto-resolves repo-like model refs to mounted Kaggle paths under `/kaggle/input` when possible
 - exposes `predict(id_series, problem_series)` and returns:
   - `polars.DataFrame` if available
   - else `pandas.DataFrame`
@@ -125,9 +133,10 @@ This gives a practical safe-by-default execution path for tool-generated code.
 
 Path prompting strategy:
 
-- `P1` tool path returns JSON containing `python_code` + `final_answer`
-- `P2` reasoning path returns JSON `final_answer` plus `FINAL: <int>`
+- `P1` tool path returns JSON containing `python_code`, `validator_code`, and `final_answer`
+- `P2` reasoning path returns JSON `final_answer` with explicit independent-check trace
 - `P3` backsolve path returns JSON with constraints-based derivation
+- `P4` repair path critiques top prior candidates and proposes corrected answer/code
 
 Output parser extracts:
 
@@ -197,6 +206,14 @@ Each solved problem writes `runs/<id>.json` containing:
 
 This supports failure analysis and iterative tuning.
 
+Runtime debug tracing can be enabled via CLI/env:
+
+- CLI: `--debug`, `--debug-file`, `--debug-raw-output`, `--debug-max-chars`
+- Env: `AIMO3_DEBUG=1`, `AIMO3_DEBUG_FILE=...`, `AIMO3_DEBUG_RAW_OUTPUT=1`, `AIMO3_DEBUG_MAX_CHARS=...`
+
+When enabled, the solver emits JSON-lines events for each stage:
+`solve_start`, `parse_done`, `route_done`, candidate generation/verification batches, repair/hard-mode loops, and final selection.
+
 ## 9. Extension Points
 
 To connect real models:
@@ -219,6 +236,13 @@ Solve CSV:
 
 ```bash
 aimo3 solve-csv --input reference.csv --output submission.csv --evaluate
+```
+
+Solve with reference-memory bootstrap (useful for repeated public benchmark sets):
+
+```bash
+aimo3 solve-csv --input public.csv --output submission.csv \
+  --allow-reference-lookup --reference-path reference.csv
 ```
 
 Competition run (example):

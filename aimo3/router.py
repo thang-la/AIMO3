@@ -47,13 +47,19 @@ def _difficulty_score(meta: ProblemMetadata) -> float:
             "across all",
             "let sequence",
             "what is the remainder when",
+            "largest non-negative integer",
+            "floor",
+            "sum_",
+            "sum_{",
         )
     )
+    huge_number_markers = sum(n >= 10_000 for n in meta.numbers[:32])
     score = 0.0
     score += min(words / 450.0, 0.5)
     score += min(eq_count / 6.0, 0.2)
     score += min(number_count / 40.0, 0.15)
     score += min(hard_markers * 0.08, 0.3)
+    score += min(huge_number_markers * 0.05, 0.15)
     return min(score, 1.0)
 
 
@@ -70,17 +76,19 @@ def route_problem(meta: ProblemMetadata, config: SolverConfig) -> RouteDecision:
     requires_tool = domain in {Domain.NUMBER_THEORY, Domain.COMBINATORICS, Domain.MIXED}
     if meta.modulus is not None:
         requires_tool = True
+    if any(tok in meta.normalized_text.lower() for tok in ("floor", "sum_{", "recurrence", "sequence")):
+        requires_tool = True
 
-    use_backsolve = difficulty != Difficulty.EASY or domain in {Domain.GEOMETRY, Domain.MIXED}
+    use_backsolve = difficulty != Difficulty.EASY or domain in {Domain.GEOMETRY, Domain.MIXED, Domain.COMBINATORICS}
     allow_hard_mode = config.enable_hard_mode and difficulty == Difficulty.HARD
     try_symbolic_first = domain != Domain.GEOMETRY
 
     if difficulty == Difficulty.EASY:
-        n_tool, n_cot, n_backsolve = 1, 1, 0
+        n_tool, n_cot, n_backsolve = 1, 2, 1 if use_backsolve else 0
     elif difficulty == Difficulty.MEDIUM:
-        n_tool, n_cot, n_backsolve = 2, 2, 1
+        n_tool, n_cot, n_backsolve = 3, 3, 2
     else:
-        n_tool, n_cot, n_backsolve = 4, 3, 2
+        n_tool, n_cot, n_backsolve = 6, 4, 3
 
     return RouteDecision(
         domain=domain,

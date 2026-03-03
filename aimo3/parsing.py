@@ -7,9 +7,14 @@ from aimo3.models import ProblemMetadata
 
 _MOD_PATTERNS = [
     re.compile(r"\bmod(?:ulo|ulus)?\s*(\d+)", re.IGNORECASE),
-    re.compile(r"remainder when .* divided by\s*(\d+)", re.IGNORECASE),
-    re.compile(r"divided by\s*(\d+)", re.IGNORECASE),
 ]
+_REMAINDER_DIV_POWER = re.compile(
+    r"remainder when .*? divided by\s*(\d+)\s*\^\s*\{?(\d+)\}?",
+    re.IGNORECASE,
+)
+_DIVIDED_POWER = re.compile(r"divided by\s*(\d+)\s*\^\s*\{?(\d+)\}?", re.IGNORECASE)
+_REMAINDER_DIV_INT = re.compile(r"remainder when .*? divided by\s*(\d+)", re.IGNORECASE)
+_DIVIDED_INT = re.compile(r"divided by\s*(\d+)", re.IGNORECASE)
 _POWER_PATTERN = re.compile(r"(\d+)\s*\^\s*\{?(\d+)\}?")
 _NUMBER_PATTERN = re.compile(r"\b\d+\b")
 _VAR_PATTERN = re.compile(r"\b[a-zA-Z]\b")
@@ -54,12 +59,23 @@ def extract_modulus(text: str) -> int | None:
         if match:
             return int(match.group(1))
 
-    # Handle forms like "10^{5}" near remainder statements.
-    if "remainder" in normalized.lower() and "divided by" in normalized.lower():
-        tail = normalized.lower().split("divided by", 1)[1]
-        power_match = _POWER_PATTERN.search(tail.replace(" ", ""))
-        if power_match:
-            return int(power_match.group(1)) ** int(power_match.group(2))
+    rem_pow = _REMAINDER_DIV_POWER.search(normalized)
+    if rem_pow:
+        return int(rem_pow.group(1)) ** int(rem_pow.group(2))
+
+    # If not explicitly in remainder phrase, still allow power-form divisor.
+    divided_power_all = list(_DIVIDED_POWER.finditer(normalized))
+    if divided_power_all:
+        m = divided_power_all[-1]
+        return int(m.group(1)) ** int(m.group(2))
+
+    rem_int = _REMAINDER_DIV_INT.search(normalized)
+    if rem_int:
+        return int(rem_int.group(1))
+
+    divided_int_all = list(_DIVIDED_INT.finditer(normalized))
+    if divided_int_all:
+        return int(divided_int_all[-1].group(1))
     return None
 
 
